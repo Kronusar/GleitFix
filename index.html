@@ -244,6 +244,7 @@
     .founder-avatar{width:180px;height:180px;border-radius:50%;background:linear-gradient(135deg,#1c1c1c 0%,#262626 100%);border:1px solid rgba(212,144,58,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden}
     .founder-avatar::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(212,144,58,.07) 0%,transparent 65%)}
     .founder-initials{font-family:var(--font-display);font-size:3rem;color:var(--amber);opacity:.45;letter-spacing:-.03em}
+    .founder-photo{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
     .founder-name{font-family:var(--font-display);font-size:clamp(1.8rem,3.5vw,2.8rem);margin-bottom:.4rem;color:var(--text)}
     .founder-title{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:2rem;opacity:.8}
     .founder-quote{font-family:var(--font-display);font-size:clamp(1.05rem,1.8vw,1.4rem);color:var(--text-dim);line-height:1.55;margin-bottom:2.5rem;padding-left:1.5rem;border-left:2px solid rgba(212,144,58,.3);font-style:italic}
@@ -671,7 +672,7 @@
 
             <!-- ═══ PUSH LABEL - appears during animation ═══ -->
             <g id="pushLabel" opacity="0">
-              <text x="280" y="42" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="400" letter-spacing="2" fill="#D4903A" opacity="0.75">← einmal schieben</text>
+              <text x="280" y="42" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="400" letter-spacing="2" fill="#D4903A" opacity="0.75" data-de="← einmal schieben" data-en="← one push">← einmal schieben</text>
             </g>
 
             <!-- ═══ SUCCESS TICK ═══ -->
@@ -683,8 +684,8 @@
             <!-- Bottom label: rail type -->
             <text x="245" y="48" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="7.5" letter-spacing="2.5" fill="#4a4a4a" opacity="0.9">VORHANGSCHIENE</text>
           </svg>
-          <p class="curtain-caption">Vorhanggleiter · Aluminium-Schiene · Gleitfix-Adapter</p>
-          <button class="curtain-replay" id="curtainReplayBtn" onclick="replayCurtain()">&#8635; Nochmals</button>
+          <p class="curtain-caption" data-de="Vorhanggleiter · Aluminium-Schiene · Gleitfix-Adapter" data-en="Curtain Gliders · Aluminium Rail · GleitFix Adapter">Vorhanggleiter · Aluminium-Schiene · Gleitfix-Adapter</p>
+          <button class="curtain-replay" id="curtainReplayBtn" onclick="replayCurtain()" data-de="&#8635; Nochmals" data-en="&#8635; Replay">&#8635; Nochmals</button>
         </div>
       </div>
     </div>
@@ -778,7 +779,7 @@
         <div class="outcome-card reveal">
           <p class="outcome-category" data-de="Personalaufwand" data-en="Staff Required">Personalaufwand</p>
           <div class="outcome-transform">
-            <span class="outcome-before">2 Pers.</span>
+            <span class="outcome-before" data-de="2 Pers." data-en="2 staff">2 Pers.</span>
             <span class="outcome-arrow">→</span>
             <span class="outcome-after">Solo</span>
           </div>
@@ -787,18 +788,18 @@
         <div class="outcome-card reveal">
           <p class="outcome-category" data-de="Schienenprofil-Kompatibilität" data-en="Rail Compatibility">Schienenprofil-Kompatibilität</p>
           <div class="outcome-transform">
-            <span class="outcome-before">1 Typ</span>
+            <span class="outcome-before" data-de="1 Typ" data-en="1 type">1 Typ</span>
             <span class="outcome-arrow">→</span>
-            <span class="outcome-after">Alle</span>
+            <span class="outcome-after" data-de="Alle" data-en="All">Alle</span>
           </div>
           <p class="outcome-desc" data-de="Austauschbare Steckköpfe decken alle gängigen Schweizer Einputzschienen ab - ohne bestehende Gleiter zu ersetzen." data-en="Interchangeable snap-on heads fit all common Swiss recessed rail profiles - no need to replace your existing gliders.">Austauschbare Steckköpfe decken alle gängigen Schweizer Einputzschienen ab - ohne bestehende Gleiter zu ersetzen.</p>
         </div>
         <div class="outcome-card reveal">
           <p class="outcome-category" data-de="Sicherheit" data-en="Safety">Sicherheit</p>
           <div class="outcome-transform">
-            <span class="outcome-before">Leiter</span>
+            <span class="outcome-before" data-de="Leiter" data-en="Ladder">Leiter</span>
             <span class="outcome-arrow">→</span>
-            <span class="outcome-after">Boden</span>
+            <span class="outcome-after" data-de="Boden" data-en="Ground">Boden</span>
           </div>
           <p class="outcome-desc" data-de="Kein Leitern-Unfallrisiko. Kein Überstrecken. Der gesamte Vorgang findet auf Tischhöhe statt - sicher und ergonomisch." data-en="No ladder-fall risk. No overreaching. The entire process happens at table height - safe and ergonomic.">Kein Leitern-Unfallrisiko. Kein Überstrecken. Der gesamte Vorgang findet auf Tischhöhe statt - sicher und ergonomisch.</p>
         </div>
@@ -969,11 +970,11 @@
       <div class="diff-images reveal">
         <div class="img-reveal img-wipe">
           <img src="images/product_pictures_tessa_dam_1349275_1200-1200.jpg" alt="Querschnitt Vorhangschiene mit Gleiter" class="img-dark" loading="lazy">
-          <span class="img-label">Innenkanal &amp; Gleiter</span>
+          <span class="img-label" data-de="Innenkanal &amp; Gleiter" data-en="Inner Channel &amp; Gliders">Innenkanal &amp; Gleiter</span>
         </div>
         <div class="img-reveal img-wipe">
           <img src="images/main_product_picture_tessa_dam_1349279_1200-1200.jpg" alt="3D-Ansicht Aluminium-Schienenprofil" class="img-dark-warm" loading="lazy">
-          <span class="img-label">Schienenprofil, Universalfit</span>
+          <span class="img-label" data-de="Schienenprofil, Universalfit" data-en="Rail Profile, Universal Fit">Schienenprofil, Universalfit</span>
         </div>
       </div>
       <div class="reveal">
@@ -1049,7 +1050,7 @@
       <div class="reveal"><span class="label" data-de="Der Gründer" data-en="The Founder">Der Gründer</span></div>
       <div class="founder-inner reveal">
         <div class="founder-avatar">
-          <span class="founder-initials">NT</span>
+          <img src="images/founder_image.jpg" alt="Nicola Thöni" class="founder-photo">
         </div>
         <div>
           <p class="founder-name">Nicola Thöni</p>
@@ -1080,26 +1081,26 @@
         <div class="tgrid" id="tgrid">
           <div class="tcard tcard-active">
             <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-            <p class="tcard-text">«Endlich! Ich habe immer zwei Personen gebraucht beim Vorhangwechsel. Mit Gleitfix schaffe ich es alleine - und in einem Bruchteil der Zeit.»</p>
+            <p class="tcard-text" data-de="«Endlich! Ich habe immer zwei Personen gebraucht beim Vorhangwechsel. Mit Gleitfix schaffe ich es alleine - und in einem Bruchteil der Zeit.»" data-en="&ldquo;Finally! I always needed two people for curtain changes. With GleitFix I manage alone - in a fraction of the time.&rdquo;">«Endlich! Ich habe immer zwei Personen gebraucht beim Vorhangwechsel. Mit Gleitfix schaffe ich es alleine - und in einem Bruchteil der Zeit.»</p>
             <div class="tcard-author">
               <span class="tcard-name">Monika S.</span>
-              <span class="tcard-role">Hauswirtschaftsleiterin, APH Zürich</span>
+              <span class="tcard-role" data-de="Hauswirtschaftsleiterin, APH Zürich" data-en="Head of Housekeeping, Care Home Zurich">Hauswirtschaftsleiterin, APH Zürich</span>
             </div>
           </div>
           <div class="tcard">
             <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-            <p class="tcard-text">«Wir wechseln die Vorhänge im ganzen Haus jetzt innerhalb von zwei Stunden. Früher hat das den halben Tag gedauert. Das ist echter Mehrwert.»</p>
+            <p class="tcard-text" data-de="«Wir wechseln die Vorhänge im ganzen Haus jetzt innerhalb von zwei Stunden. Früher hat das den halben Tag gedauert. Das ist echter Mehrwert.»" data-en="&ldquo;We now change curtains across the whole facility within two hours. Before, it took half a day. That&rsquo;s real value.&rdquo;">«Wir wechseln die Vorhänge im ganzen Haus jetzt innerhalb von zwei Stunden. Früher hat das den halben Tag gedauert. Das ist echter Mehrwert.»</p>
             <div class="tcard-author">
               <span class="tcard-name">Andreas M.</span>
-              <span class="tcard-role">Heimleiter, Pflegezentrum Graubünden</span>
+              <span class="tcard-role" data-de="Heimleiter, Pflegezentrum Graubünden" data-en="Facility Director, Care Centre Graubünden">Heimleiter, Pflegezentrum Graubünden</span>
             </div>
           </div>
           <div class="tcard">
             <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-            <p class="tcard-text">«So simpel und trotzdem so genial. Ich frage mich ehrlich, warum das nicht schon längst jemand gemacht hat.»</p>
+            <p class="tcard-text" data-de="«So simpel und trotzdem so genial. Ich frage mich ehrlich, warum das nicht schon längst jemand gemacht hat.»" data-en="&ldquo;So simple and yet so brilliant. I honestly wonder why no one has done this sooner.&rdquo;">«So simpel und trotzdem so genial. Ich frage mich ehrlich, warum das nicht schon längst jemand gemacht hat.»</p>
             <div class="tcard-author">
               <span class="tcard-name">Sandra K.</span>
-              <span class="tcard-role">Inneneinrichterin, Bern</span>
+              <span class="tcard-role" data-de="Inneneinrichterin, Bern" data-en="Interior Designer, Bern">Inneneinrichterin, Bern</span>
             </div>
           </div>
         </div>
