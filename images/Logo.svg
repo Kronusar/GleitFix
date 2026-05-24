@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 80" fill="none">
+  <!-- Gleitfix amber adapter bar -->
+  <rect x="0" y="0" width="56" height="16" rx="4" fill="#C4883A"/>
+  <!-- Curtain glider body -->
+  <rect x="10" y="16" width="36" height="33" rx="6" fill="#EDEBE3"/>
+  <!-- Glider hook (curtain attachment, curves left) -->
+  <path d="M28 49 Q28 65 14 65 Q5 65 5 57" stroke="#EDEBE3" stroke-width="9" stroke-linecap="round"/>
+</svg>

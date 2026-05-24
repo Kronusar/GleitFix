@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gleitfix: Einmal laden. Einschieben. Fertig.</title>
+  <meta name="description" content="Das erste universelle Vorhang-Lade-System. Alle Gleiter auf einmal – kein Leiter, kein Stress. Entworfen in der Schweiz von Nicola Thöni.">
+  <meta property="og:title" content="Gleitfix: Einmal laden. Einschieben. Fertig.">
+  <meta property="og:description" content="Das erste universelle Vorhang-Lade-System. Entworfen in der Schweiz.">
+  <meta property="og:image" content="images/og-image.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="images/Logo.svg" type="image/svg+xml">
+  <link rel="icon" href="images/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0A0A0A;--surface:#111111;--text:#F0EDE6;--text-dim:#A8A89E;
+      --text-secondary:#6B6B63;--teal:#4A8C7B;--amber:#D4903A;
+      --amber-bright:#E8A54A;--amber-dim:rgba(212,144,58,0.10);
+      --border:#1A1A1A;
+      --font-display:'DM Serif Display',Georgia,serif;
+      --font-body:'DM Sans','Helvetica Neue',Arial,sans-serif;
+    }
+    html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:#2A2A2A;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:18px;line-height:1.6;overflow-x:hidden}
+    body.loading{overflow:hidden}
+    ::selection{background:var(--amber);color:var(--bg)}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+
+    /* LOADER */
+    .loader{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem}
+    .loader-text{font-family:var(--font-display);font-size:1.2rem;color:var(--text-secondary);letter-spacing:.1em}
+    .loader-bar{width:120px;height:1px;background:var(--border);position:relative;overflow:hidden}
+    .loader-bar::after{content:'';position:absolute;top:0;left:0;height:100%;width:0%;background:var(--amber);animation:loaderFill 1.4s cubic-bezier(.4,0,.2,1) forwards}
+    @keyframes loaderFill{0%{width:0%}100%{width:100%}}
+
+    /* PROGRESS */
+    .scroll-progress{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--amber),var(--amber-bright));z-index:200}
+
+    /* GRAIN */
+    .grain{position:fixed;inset:0;z-index:8000;pointer-events:none;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px}
+
+    /* ORBS */
+    .orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;will-change:transform}
+    .orb-1{width:500px;height:500px;background:radial-gradient(circle,var(--amber-dim) 0%,transparent 70%);top:5%;left:-10%;opacity:.5}
+    .orb-2{width:450px;height:450px;background:radial-gradient(circle,var(--amber-dim) 0%,transparent 70%);bottom:10%;right:-12%;opacity:.5}
+
+    /* CURSOR GLOW */
+    .cursor-glow{position:fixed;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(196,136,58,.03) 0%,transparent 70%);pointer-events:none;z-index:1;transform:translate(-50%,-50%)}
+
+    /* LABEL */
+    .label{font-family:var(--font-body);font-size:.65rem;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:2rem;display:flex;align-items:center;gap:1rem}
+    .label::before{content:'';width:20px;height:1px;background:var(--amber);flex-shrink:0}
+
+    .container{max-width:1200px;margin:0 auto;padding:0 clamp(1.5rem,5vw,4rem);position:relative;z-index:2}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.25rem 0;transition:background .6s,padding .6s,border-color .6s;border-bottom:1px solid transparent}
+    nav.scrolled{background:rgba(10,10,10,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:.75rem 0;border-bottom-color:rgba(255,255,255,.03)}
+    nav .container{display:flex;justify-content:space-between;align-items:center}
+    .nav-logo{display:flex;align-items:center;gap:10px}
+    .nav-logo-icon{height:32px;width:auto;opacity:.9;transition:opacity .3s}
+    .nav-logo:hover .nav-logo-icon{opacity:1}
+    .nav-logo-text{font-family:var(--font-display);font-size:1.15rem;letter-spacing:-.01em;color:var(--text);opacity:.9}
+    .nav-cta{font-size:.75rem;font-weight:500;letter-spacing:.08em;padding:.5rem 1.3rem;border:1px solid rgba(196,136,58,.35);color:var(--amber);border-radius:100px;transition:all .5s cubic-bezier(.25,.46,.45,.94);position:relative;overflow:hidden}
+    .nav-cta::before{content:'';position:absolute;inset:0;background:var(--amber);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.25,.46,.45,.94);z-index:-1;border-radius:100px}
+    .nav-cta:hover{color:var(--bg);border-color:var(--amber)}
+    .nav-cta:hover::before{transform:scaleX(1)}
+
+    /* SHAPES */
+    .shape{position:absolute;pointer-events:none;will-change:transform}
+    .shape-circle{border-radius:50%;border:1px solid currentColor}
+    .shape-dot{border-radius:50%;background:currentColor}
+    .shape-ring{border-radius:50%;border:1px solid currentColor}
+    .shape-plus{position:relative}
+    .shape-plus::before,.shape-plus::after{content:'';position:absolute;top:50%;left:50%;background:currentColor}
+    .shape-plus::before{width:1px;height:100%;transform:translate(-50%,-50%)}
+    .shape-plus::after{width:100%;height:1px;transform:translate(-50%,-50%)}
+    .shape-line{height:1px;background:currentColor}
+
+    /* HERO */
+    .hero{position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:6rem 2rem 4rem;overflow:hidden}
+    .hero-label{font-family:var(--font-body);font-size:.7rem;font-weight:400;letter-spacing:.45em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:2.5rem;overflow:hidden}
+    .hero-label-inner{display:inline-block}
+    .hero-lines{margin-bottom:3rem}
+    .hero-line{font-family:var(--font-display);font-size:clamp(3.5rem,9vw,10rem);line-height:1.08;display:block;overflow:hidden}
+    .hero-line .line-inner{display:block;will-change:transform}
+    .hero-line:nth-child(1){color:var(--text)}
+    .hero-line:nth-child(2){color:var(--amber);text-shadow:0 0 80px rgba(212,144,58,.15)}
+    .hero-line:nth-child(3){color:var(--amber-bright);text-shadow:0 0 60px rgba(232,165,74,.12)}
+    .hero-sub{font-size:clamp(.9rem,1.6vw,1.05rem);color:var(--text-secondary);max-width:400px;margin-bottom:3rem;line-height:1.75;font-weight:300;letter-spacing:.015em}
+    .btn-magnetic{position:relative;display:inline-flex}
+    .btn-primary{display:inline-flex;align-items:center;gap:.7rem;font-family:var(--font-body);font-size:1.1rem;font-weight:500;letter-spacing:.02em;padding:1.15rem 2.8rem;background:var(--amber);color:var(--bg);border:none;border-radius:100px;cursor:pointer;transition:box-shadow .5s;text-decoration:none;position:relative;overflow:hidden}
+    .btn-primary::after{content:'';position:absolute;inset:0;border-radius:100px;background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 50%);opacity:0;transition:opacity .5s}
+    .btn-primary:hover::after{opacity:1}
+    .btn-primary:hover{box-shadow:0 0 50px rgba(196,136,58,.22),0 14px 36px rgba(196,136,58,.18)}
+    .btn-primary .arrow{transition:transform .4s cubic-bezier(.25,.46,.45,.94);display:inline-block}
+    .btn-primary:hover .arrow{transform:translateX(5px)}
+    .hero-scroll{position:absolute;bottom:2rem;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text-secondary);display:flex;flex-direction:column;align-items:center;gap:.75rem;opacity:.4}
+    .scroll-arrow{width:1px;height:44px;position:relative;overflow:hidden}
+    .scroll-arrow::after{content:'';position:absolute;top:-100%;left:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--text-secondary));animation:scrollDown 2.2s ease-in-out infinite}
+    @keyframes scrollDown{0%{top:-100%}100%{top:100%}}
+    .hero .s1{top:12%;left:6%;width:150px;height:150px;color:var(--amber);opacity:.05}
+    .hero .s2{top:20%;right:8%;width:18px;height:18px;color:var(--amber);opacity:.18}
+    .hero .s3{bottom:24%;left:10%;width:90px;color:var(--border);opacity:.18}
+    .hero .s4{bottom:30%;right:9%;width:90px;height:90px;color:var(--amber);opacity:.04}
+    .hero .s5{top:36%;left:3%;width:12px;height:12px;color:var(--amber-bright);opacity:.12}
+    .hero .s6{top:16%;left:42%;width:5px;height:5px;color:var(--amber);opacity:.15}
+    .hero .s7{bottom:18%;right:22%;width:3px;height:3px;color:var(--amber);opacity:.2}
+    .hero .s8{top:50%;right:4%;width:60px;color:var(--border);opacity:.1}
+
+    /* SECTION */
+    .section{padding:clamp(7rem,15vw,13rem) 0;position:relative}
+    .section-divider{width:100%;height:1px;background:var(--border);position:relative;overflow:hidden}
+    .section-divider::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,var(--amber),transparent);transform:scaleX(0);transform-origin:left}
+    .section-divider.swept::after{animation:divSweep 1.4s cubic-bezier(.25,.46,.45,.94) forwards}
+    @keyframes divSweep{0%{transform:scaleX(0);opacity:.5}100%{transform:scaleX(1);opacity:0}}
+
+    /* PROBLEM */
+    .problem{background:var(--bg);position:relative;overflow:hidden}
+    .problem-content{max-width:640px}
+    .problem h2{font-family:var(--font-display);font-size:clamp(2.5rem,5.5vw,5rem);line-height:1.08;margin-bottom:2.5rem}
+    .problem h2 em{font-style:normal;color:var(--amber)}
+    .problem p{font-size:clamp(.95rem,1.5vw,1.1rem);color:var(--text-dim);line-height:1.9;margin-bottom:1.25rem;font-weight:300}
+    .problem .stat{display:inline-flex;align-items:baseline;gap:.75rem;margin-top:3rem;padding-top:2.5rem;border-top:1px solid var(--border)}
+    .problem .stat-number{font-family:var(--font-display);font-size:clamp(3.5rem,6vw,5rem);color:var(--amber);line-height:1}
+    .problem .stat-label{font-size:.9rem;color:var(--text-secondary);font-weight:300}
+    .problem .ps1{top:8%;right:6%;width:110px;height:110px;color:var(--amber);opacity:.04}
+    .problem .ps2{bottom:12%;right:12%;width:16px;height:16px;color:var(--amber);opacity:.08}
+    .problem-visual{margin-top:4rem;position:relative}
+    .problem-visual .img-reveal{height:320px;border-radius:16px}
+    .problem-visual .img-reveal::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.15) 0%,rgba(10,10,10,.6) 100%);z-index:1;border-radius:16px;pointer-events:none}
+    .problem-visual .img-caption{position:absolute;bottom:1.25rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(240,237,230,.5);z-index:2}
+    @media(max-width:600px){.problem-visual .img-reveal{height:200px}}
+
+    /* PRINCIPLE / CURTAIN ANIMATION */
+    .principle-section{background:var(--surface);position:relative;overflow:hidden;padding:clamp(5rem,10vw,9rem) 0}
+    .principle-inner{display:grid;grid-template-columns:1fr 1fr;gap:clamp(3rem,6vw,7rem);align-items:center}
+    @media(max-width:800px){.principle-inner{grid-template-columns:1fr}}
+    .principle-text .tagline{font-family:var(--font-display);font-size:clamp(1.6rem,3.2vw,2.6rem);line-height:1.22;margin-bottom:1.5rem;color:var(--text)}
+    .principle-text .tagline em{font-style:normal;color:var(--amber)}
+    .principle-text .body{font-size:clamp(.9rem,1.3vw,1rem);color:var(--text-dim);line-height:1.85;font-weight:300;max-width:420px}
+    .principle-steps{margin-top:2rem;display:flex;flex-direction:column;gap:.75rem}
+    .ps-item{display:flex;align-items:flex-start;gap:.85rem;font-size:.88rem;color:var(--text-secondary);font-weight:300;line-height:1.5}
+    .ps-num{font-family:var(--font-display);font-size:1.1rem;color:var(--amber);opacity:.7;min-width:1.2rem}
+
+    /* Curtain SVG scene */
+    .curtain-scene-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:1rem}
+    #curtainScene{width:100%;max-width:560px;height:auto;overflow:visible}
+    .curtain-replay{display:inline-flex;align-items:center;gap:.4rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);border:1px solid rgba(212,144,58,.2);border-radius:100px;padding:.3rem .9rem;background:none;cursor:pointer;transition:border-color .3s,background .3s;margin-top:.25rem}
+    .curtain-replay:hover{border-color:rgba(212,144,58,.5);background:rgba(212,144,58,.05)}
+    .curtain-caption{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-secondary);opacity:.4;text-align:center}
+
+    /* HOW IT WORKS – restructured for correct vertical centering */
+    .how-outer{position:relative}
+    .how-header{padding:clamp(5rem,10vw,9rem) 0 3.5rem}
+    .how-header h2{font-family:var(--font-display);font-size:clamp(2.5rem,5.5vw,5rem);line-height:1.08}
+    .how-pin-area{height:100vh;overflow:hidden;position:relative}
+    .how-track{display:flex;width:300%;height:100%}
+    .how-step{width:100vw;height:100%;display:flex;align-items:center;padding:0 clamp(1.5rem,5vw,4rem);position:relative}
+    .how-step-inner{max-width:1200px;margin:0 auto;width:100%;display:grid;grid-template-columns:auto 1fr;gap:clamp(2rem,5vw,5rem);align-items:center}
+    .step-number{font-family:var(--font-display);font-size:clamp(8rem,18vw,16rem);color:var(--amber);opacity:.1;line-height:1;user-select:none}
+    .step-content h3{font-family:var(--font-display);font-size:clamp(2rem,4vw,3.5rem);margin-bottom:1.25rem;color:var(--amber)}
+    .step-content p{font-size:clamp(.95rem,1.3vw,1.05rem);color:var(--text-dim);line-height:1.9;max-width:440px;font-weight:300}
+    .step-accent{position:absolute;bottom:12%;right:8%;width:70px;height:70px;border-radius:50%;border:1px solid var(--amber);opacity:.04}
+    .how-dots{position:fixed;right:2rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:50;opacity:0;transition:opacity .5s}
+    .how-dots.visible{opacity:1}
+    .how-dot{width:6px;height:6px;border-radius:50%;background:var(--text-secondary);opacity:.3;transition:all .4s}
+    .how-dot.active{opacity:1;background:var(--amber);transform:scale(1.4)}
+    .how-punchline-wrap{padding:4rem 0 clamp(7rem,15vw,13rem)}
+    .how-punchline p{font-family:var(--font-display);font-size:clamp(1.4rem,2.8vw,2.4rem);color:var(--text);max-width:660px;line-height:1.35}
+    .how-punchline em{font-style:normal;color:var(--amber);position:relative}
+    .how-punchline em::after{content:'';position:absolute;bottom:-2px;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--amber),transparent);opacity:.4}
+    @media(max-width:767px){
+      .how-pin-area{height:auto;overflow:visible}
+      .how-track{flex-direction:column;width:100%;height:auto}
+      .how-step{width:100%;height:auto;min-height:auto;padding:3rem clamp(1.5rem,5vw,4rem)}
+      .how-step-inner{grid-template-columns:1fr;gap:0}
+      .step-number{font-size:5rem;margin-bottom:-.5rem;opacity:.16}
+      .step-accent{display:none}
+      .how-dots{display:none}
+    }
+    @media(min-width:768px) and (max-height:680px){
+      .how-pin-area{height:auto;overflow:visible}
+      .how-track{flex-direction:column;width:100%;height:auto}
+      .how-step{width:100%;height:auto;min-height:auto;padding:4rem clamp(1.5rem,5vw,4rem)}
+      .how-dots{display:none}
+    }
+
+    /* AUDIENCE */
+    .audience{background:var(--surface);position:relative;overflow:hidden}
+    .audience h2{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:4rem;max-width:620px}
+    .audience-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+    @media(max-width:767px){.audience-grid{grid-template-columns:1fr}}
+    .audience-card{padding:2.5rem;border:1px solid var(--border);border-radius:16px;background:rgba(10,10,10,.5);transition:border-color .6s,box-shadow .6s,transform .6s cubic-bezier(.25,.46,.45,.94);position:relative;overflow:hidden}
+    .audience-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:0;transition:opacity .6s}
+    .audience-card:hover{border-color:rgba(212,144,58,.2);box-shadow:0 12px 48px rgba(0,0,0,.35),0 0 0 1px rgba(212,144,58,.06);transform:translateY(-6px)}
+    .audience-card:hover::before{opacity:.4}
+    .audience-card .card-icon{width:36px;height:36px;border-radius:10px;border:1px solid rgba(212,144,58,.2);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;font-size:.85rem;color:var(--amber);transition:border-color .5s,background .5s}
+    .audience-card:hover .card-icon{border-color:rgba(212,144,58,.4);background:rgba(212,144,58,.06)}
+    .audience-card .card-label{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-bottom:1.25rem}
+    .audience-card h3{font-family:var(--font-display);font-size:1.35rem;margin-bottom:1rem}
+    .audience-card p{font-size:.92rem;color:var(--text-dim);line-height:1.8;font-weight:300}
+
+    /* DIFFERENTIATOR */
+    .differentiator{background:var(--bg);position:relative;overflow:hidden}
+    .differentiator h2{font-family:var(--font-display);font-size:clamp(2.5rem,5.5vw,5rem);line-height:1.08;margin-bottom:1.5rem}
+    .diff-body{font-size:clamp(.95rem,1.3vw,1.05rem);color:var(--text-dim);line-height:1.9;max-width:540px;margin-bottom:5rem;font-weight:300}
+    .rail-profiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:600px){.rail-profiles{grid-template-columns:1fr;max-width:260px}}
+    .rail-profile{display:flex;flex-direction:column;align-items:center;gap:1.25rem;padding:2rem 1.5rem;border:1px solid var(--border);border-radius:14px;background:var(--surface);transition:border-color .5s,transform .5s}
+    .rail-profile:hover{border-color:rgba(212,144,58,.2);transform:translateY(-3px)}
+    .rail-profile svg{width:100%;max-width:140px;height:auto}
+    .rail-profile .draw-path{stroke-dasharray:800;stroke-dashoffset:800;transition:stroke-dashoffset 1.8s cubic-bezier(.25,.46,.45,.94)}
+    .rail-profile.drawn .draw-path{stroke-dashoffset:0}
+    .rail-profile .glider-dot{opacity:0;transition:opacity .6s ease 1.4s}
+    .rail-profile.drawn .glider-dot{opacity:1}
+    .rail-profile span{font-size:.65rem;letter-spacing:.15em;color:var(--text-secondary);text-transform:uppercase}
+
+    /* CREDIBILITY */
+    .credibility{background:var(--surface);position:relative;overflow:hidden}
+    .credibility h2{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:1.5rem}
+    .credibility-body{font-size:clamp(.95rem,1.3vw,1.05rem);color:var(--text-dim);line-height:1.9;max-width:540px;margin-bottom:4rem;font-weight:300}
+    .credibility-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:600px){.credibility-stats{grid-template-columns:1fr;gap:2rem}}
+    .cred-stat{display:flex;flex-direction:column;padding-left:1.5rem;border-left:1px solid var(--border);transition:border-color .5s}
+    .cred-stat:hover{border-left-color:rgba(212,144,58,.5)}
+    .cred-stat .cred-number{font-family:var(--font-display);font-size:clamp(2.5rem,4.5vw,3.5rem);color:var(--amber);line-height:1.1}
+    .cred-stat .cred-label{font-size:.8rem;color:var(--text-secondary);margin-top:.5rem;font-weight:300}
+
+    /* FOUNDER */
+    .founder-section{background:var(--bg);position:relative;overflow:hidden}
+    .founder-inner{display:grid;grid-template-columns:auto 1fr;gap:clamp(3rem,6vw,6rem);align-items:start}
+    @media(max-width:767px){.founder-inner{grid-template-columns:1fr}}
+    .founder-avatar{width:180px;height:180px;border-radius:50%;background:linear-gradient(135deg,#1c1c1c 0%,#262626 100%);border:1px solid rgba(212,144,58,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden}
+    .founder-avatar::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(212,144,58,.07) 0%,transparent 65%)}
+    .founder-initials{font-family:var(--font-display);font-size:3rem;color:var(--amber);opacity:.45;letter-spacing:-.03em}
+    .founder-name{font-family:var(--font-display);font-size:clamp(1.8rem,3.5vw,2.8rem);margin-bottom:.4rem;color:var(--text)}
+    .founder-title{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:2rem;opacity:.8}
+    .founder-quote{font-family:var(--font-display);font-size:clamp(1.05rem,1.8vw,1.4rem);color:var(--text-dim);line-height:1.55;margin-bottom:2.5rem;padding-left:1.5rem;border-left:2px solid rgba(212,144,58,.3);font-style:italic}
+    .founder-trust{display:flex;flex-direction:column;gap:.7rem}
+    .founder-trust-item{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--text-secondary);font-weight:300}
+    .founder-trust-item::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--amber);opacity:.55;flex-shrink:0}
+
+    /* TESTIMONIALS */
+    .testimonials-section{background:var(--surface);position:relative;overflow:hidden}
+    .testimonials-section h2{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:3rem;max-width:540px}
+    .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:900px){.tgrid{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.tgrid{grid-template-columns:1fr}}
+    .tcard{padding:2.5rem;border:1px solid var(--border);border-radius:16px;background:rgba(10,10,10,.5);position:relative;transition:border-color .5s,transform .5s,box-shadow .5s;opacity:1}
+    .tcard:hover{border-color:rgba(212,144,58,.15);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+    .tcard-active{border-color:rgba(212,144,58,.18)!important}
+    .tcard::before{content:'\201C';position:absolute;top:1rem;right:1.6rem;font-family:var(--font-display);font-size:5rem;line-height:1;color:var(--amber);opacity:.07}
+    .tcard-stars{display:flex;gap:3px;margin-bottom:1.25rem}
+    .tcard-stars span{color:var(--amber);font-size:.75rem}
+    .tcard-text{font-size:.93rem;color:var(--text-dim);line-height:1.8;font-weight:300;margin-bottom:2rem;font-style:italic}
+    .tcard-author{display:flex;flex-direction:column;gap:.2rem}
+    .tcard-name{font-size:.85rem;font-weight:500;color:var(--text)}
+    .tcard-role{font-size:.68rem;letter-spacing:.1em;color:var(--text-secondary);text-transform:uppercase}
+    .carousel-nav{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:2.5rem}
+    .carousel-dot{width:6px;height:6px;border-radius:50%;background:var(--text-secondary);opacity:.25;cursor:pointer;transition:all .3s;border:none}
+    .carousel-dot.active{opacity:1;background:var(--amber);transform:scale(1.4)}
+
+    /* APH */
+    .aph-section{background:var(--surface);position:relative;overflow:hidden}
+    .aph-headline{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:2rem;max-width:600px}
+    .aph-body{font-size:clamp(.95rem,1.3vw,1.05rem);color:var(--text-dim);line-height:1.9;max-width:640px;margin-bottom:3.5rem;font-weight:300}
+    .aph-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:640px}
+    @media(max-width:600px){.aph-stats{grid-template-columns:1fr;gap:1.5rem}}
+    .aph-stat{display:flex;flex-direction:column;padding-left:1.5rem;border-left:1px solid rgba(212,144,58,.25)}
+    .aph-num{font-family:var(--font-display);font-size:clamp(1.8rem,3vw,2.4rem);color:var(--amber);line-height:1.1}
+    .aph-label{font-size:.75rem;color:var(--text-secondary);margin-top:.4rem;font-weight:300;line-height:1.4}
+
+    /* CTA */
+    .cta-section{background:var(--bg);text-align:center;padding:clamp(9rem,20vw,16rem) 0;position:relative;overflow:hidden}
+    .cta-section h2{font-family:var(--font-display);font-size:clamp(2.5rem,6.5vw,6rem);line-height:1.06;margin-bottom:1.5rem}
+    .cta-section .cta-sub{font-size:clamp(.9rem,1.3vw,1rem);color:var(--text-secondary);margin-bottom:3rem;max-width:380px;margin-left:auto;margin-right:auto;font-weight:300;line-height:1.75}
+    .cta-form{display:flex;gap:.5rem;position:relative;z-index:1}
+    .cta-form input[type="email"]{flex:1;padding:.9rem 1.4rem;background:var(--surface);border:1px solid var(--border);border-radius:100px;color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none;transition:border-color .5s,box-shadow .5s}
+    .cta-form input::placeholder{color:var(--text-secondary);font-weight:300}
+    .cta-form input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(196,136,58,.08),0 0 30px rgba(196,136,58,.06)}
+    .cta-form-wrap{position:relative;max-width:440px;margin:0 auto 1.5rem}
+    .cta-form-glow{position:absolute;inset:-20px;background:radial-gradient(ellipse at center,rgba(212,144,58,.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;opacity:0;transition:opacity .8s}
+    .cta-form-wrap:focus-within .cta-form-glow{opacity:1}
+    .cta-form button{padding:.9rem 1.9rem;background:var(--amber);color:var(--bg);border:none;border-radius:100px;font-family:var(--font-body);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .5s cubic-bezier(.25,.46,.45,.94);white-space:nowrap;position:relative;overflow:hidden}
+    .cta-form button::after{content:'';position:absolute;inset:0;border-radius:100px;background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,transparent 50%);opacity:0;transition:opacity .5s}
+    .cta-form button:hover{box-shadow:0 0 50px rgba(196,136,58,.2),0 12px 32px rgba(196,136,58,.15)}
+    .cta-form button:hover::after{opacity:1}
+    .cta-fine{font-size:.7rem;color:var(--text-secondary);opacity:.4;font-weight:300}
+    .cta-section .cs1{top:12%;left:6%;width:130px;height:130px;color:var(--amber);opacity:.04}
+    .cta-section .cs2{bottom:18%;right:8%;width:14px;height:14px;color:var(--amber-bright);opacity:.12}
+    .cta-section .cs3{top:28%;right:12%;width:70px;color:var(--border);opacity:.12}
+    .cta-section .cs4{bottom:25%;left:15%;width:50px;height:50px;color:var(--amber);opacity:.04}
+    @media(max-width:500px){.cta-form{flex-direction:column}}
+
+    /* FOOTER */
+    footer{padding:4rem 0 3rem;border-top:1px solid var(--border);text-align:center;position:relative}
+    .footer-grid{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;height:100%;display:grid;grid-template-columns:repeat(4,1fr);pointer-events:none}
+    .footer-grid span{border-left:1px solid rgba(255,255,255,.02)}
+    .footer-grid span:last-child{border-right:1px solid rgba(255,255,255,.02)}
+    footer .footer-brand{font-size:.75rem;color:var(--text-secondary);font-weight:300;letter-spacing:.03em;position:relative;z-index:2}
+    .back-to-top{display:inline-flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text-secondary);opacity:.35;transition:opacity .4s,color .4s;margin-bottom:2rem;cursor:pointer;position:relative;z-index:2}
+    .back-to-top:hover{opacity:.7;color:var(--amber)}
+    .back-to-top .top-arrow{display:inline-block;width:1px;height:16px;background:currentColor;position:relative}
+    .back-to-top .top-arrow::before{content:'';position:absolute;top:0;left:-3px;width:7px;height:7px;border-top:1px solid currentColor;border-left:1px solid currentColor;transform:rotate(45deg)}
+
+    /* IMAGES */
+    .img-reveal{overflow:hidden;border-radius:12px;position:relative}
+    .img-reveal img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.25,.46,.45,.94)}
+    .img-reveal:hover img{transform:scale(1.04)}
+    .img-reveal::after{content:'';position:absolute;inset:0;border:1px solid rgba(212,144,58,.08);border-radius:12px;pointer-events:none;transition:border-color .5s}
+    .img-reveal:hover::after{border-color:rgba(212,144,58,.18)}
+    .img-wipe{clip-path:inset(0 100% 0 0);transition:clip-path 1.4s cubic-bezier(.25,.46,.45,.94)}
+    .img-wipe.revealed{clip-path:inset(0 0% 0 0)}
+    .img-dark{filter:invert(1) brightness(.55) contrast(1.3) sepia(.1)}
+    .img-dark-warm{filter:invert(1) brightness(.5) contrast(1.2) sepia(.15) hue-rotate(-10deg)}
+    .img-scene{filter:brightness(.35) contrast(1.3) saturate(.5)}
+    .diff-images{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:4rem}
+    .diff-images .img-reveal{height:240px}
+    .diff-images .img-label{position:absolute;bottom:1rem;left:1.25rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(240,237,230,.4);z-index:2}
+    @media(max-width:600px){.diff-images{grid-template-columns:1fr}.diff-images .img-reveal{height:200px}}
+
+    /* RAIL PARALLAX */
+    .rail-parallax{position:fixed;top:50%;left:-30%;width:160%;z-index:50;pointer-events:none;transform:translateY(-50%);opacity:0;transition:opacity 1.2s}
+    .rail-parallax.visible{opacity:.16}
+    .rail-parallax img{width:100%;height:60px;object-fit:cover;filter:invert(1) brightness(.7) contrast(1.2);display:block}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(50px)}
+    .reveal-children>*{opacity:0;transform:translateY(30px)}
+
+    /* LANG TOGGLE */
+    .nav-right{display:flex;align-items:center;gap:.5rem}
+    .lang-toggle{display:flex;align-items:center;gap:.2rem}
+    .lang-btn{background:none;border:none;cursor:pointer;font-family:var(--font-body);font-size:.62rem;letter-spacing:.12em;font-weight:500;color:var(--text-secondary);padding:.2rem .35rem;border-radius:4px;transition:color .3s}
+    .lang-btn.active{color:var(--amber)}
+    .lang-btn:hover{color:var(--text)}
+    .lang-sep{font-size:.55rem;color:var(--border);opacity:.8}
+
+    /* OUTCOMES */
+    .outcomes{background:var(--bg)}
+    .outcomes h2{font-family:var(--font-display);font-size:clamp(2.5rem,5.5vw,5rem);line-height:1.08;margin-bottom:4rem}
+    .outcomes h2 em{font-style:normal;color:var(--amber)}
+    .outcomes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+    @media(max-width:767px){.outcomes-grid{grid-template-columns:1fr}}
+    .outcome-card{padding:2.5rem;border:1px solid var(--border);border-radius:16px;background:var(--surface);transition:border-color .5s,transform .5s,box-shadow .5s}
+    .outcome-card:hover{border-color:rgba(212,144,58,.2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+    .outcome-category{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:500;margin-bottom:1.25rem}
+    .outcome-transform{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap}
+    .outcome-before{font-family:var(--font-display);font-size:clamp(1.6rem,2.8vw,2.2rem);color:var(--text-secondary);text-decoration:line-through;text-decoration-color:rgba(212,144,58,.3)}
+    .outcome-arrow{font-size:1.1rem;color:var(--amber);opacity:.5}
+    .outcome-after{font-family:var(--font-display);font-size:clamp(1.8rem,3.2vw,2.8rem);color:var(--amber)}
+    .outcome-desc{font-size:.88rem;color:var(--text-dim);line-height:1.8;font-weight:300}
+
+    /* FEATURES */
+    .features-section{background:var(--surface)}
+    .features-section h2{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:4rem;max-width:620px}
+    .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:900px){.features-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:580px){.features-grid{grid-template-columns:1fr}}
+    .feature-card{padding:2rem;border:1px solid var(--border);border-radius:14px;background:rgba(10,10,10,.5);transition:border-color .5s,transform .5s}
+    .feature-card:hover{border-color:rgba(212,144,58,.18);transform:translateY(-3px)}
+    .feature-icon{width:32px;height:32px;border-radius:8px;border:1px solid rgba(212,144,58,.2);display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;color:var(--amber)}
+    .feature-card h3{font-family:var(--font-display);font-size:1.15rem;margin-bottom:.75rem}
+    .feature-card p{font-size:.85rem;color:var(--text-dim);line-height:1.8;font-weight:300}
+
+    /* PRICING */
+    .pricing-section{background:var(--bg)}
+    .pricing-section h2{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.5rem);line-height:1.15;margin-bottom:1rem;max-width:620px}
+    .pricing-sub{font-size:clamp(.9rem,1.3vw,1rem);color:var(--text-dim);line-height:1.9;max-width:540px;margin-bottom:4rem;font-weight:300}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+    @media(max-width:900px){.pricing-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:580px){.pricing-grid{grid-template-columns:1fr}}
+    .pricing-card{padding:2.5rem;border:1px solid var(--border);border-radius:16px;background:var(--surface);position:relative;transition:border-color .5s,transform .5s,box-shadow .5s}
+    .pricing-card:hover{border-color:rgba(212,144,58,.2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+    .pricing-card-featured{border-color:rgba(212,144,58,.3);background:linear-gradient(135deg,rgba(212,144,58,.05) 0%,var(--surface) 100%)}
+    .pricing-card-featured::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.5}
+    .pricing-badge{display:inline-block;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;padding:.3rem .9rem;border-radius:100px;margin-bottom:1.5rem;font-weight:500}
+    .pricing-badge-plain{border:1px solid var(--border);color:var(--text-secondary)}
+    .pricing-badge-featured{border:1px solid rgba(212,144,58,.35);color:var(--amber);background:rgba(212,144,58,.06)}
+    .pricing-badge-support{border:1px solid rgba(74,140,123,.3);color:var(--teal)}
+    .pricing-tier-name{font-family:var(--font-display);font-size:1.35rem;margin-bottom:1rem}
+    .pricing-price{display:flex;align-items:baseline;gap:.5rem;margin-bottom:1.75rem;padding-bottom:1.75rem;border-bottom:1px solid var(--border)}
+    .pricing-amount{font-family:var(--font-display);font-size:clamp(1.8rem,3vw,2.4rem);color:var(--amber)}
+    .pricing-period{font-size:.8rem;color:var(--text-secondary);font-weight:300}
+    .pricing-items{display:flex;flex-direction:column;gap:.75rem;margin-bottom:2rem}
+    .pricing-item{display:flex;align-items:flex-start;gap:.75rem;font-size:.88rem;color:var(--text-dim);font-weight:300;line-height:1.5}
+    .pricing-item::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--amber);opacity:.55;flex-shrink:0;margin-top:.58rem}
+    .pricing-note{font-size:.75rem;color:var(--text-secondary);opacity:.6;font-weight:300;line-height:1.6}
+
+    /* REDUCED MOTION */
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+      .reveal,.reveal-children>*{opacity:1;transform:none}
+      .hero-line .line-inner{transform:none!important;opacity:1!important}
+      .hero-label-inner{transform:none!important;opacity:1!important}
+      .scroll-arrow::after{animation:none}
+      .grain,.cursor-glow,.scroll-progress,.orb,.rail-parallax{display:none}
+      .section-divider::after{display:none}
+      .rail-profile .draw-path{stroke-dashoffset:0}
+      .rail-profile .glider-dot{opacity:1}
+      .img-wipe{clip-path:none}
+      .loader{display:none}
+      .how-pin-area{height:auto;overflow:visible}
+      .how-track{flex-direction:column;width:100%;height:auto}
+      .how-step{width:100%;height:auto;min-height:auto;padding:3rem clamp(1.5rem,5vw,4rem)}
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <div class="loader" aria-hidden="true">
+    <span class="loader-text">Gleitfix</span>
+    <div class="loader-bar"></div>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="rail-parallax" aria-hidden="true">
+    <img src="images/425_square_profil_70810_01.jpg" alt="" loading="lazy">
+  </div>
+  <div class="how-dots" aria-hidden="true">
+    <div class="how-dot active"></div>
+    <div class="how-dot"></div>
+    <div class="how-dot"></div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="container">
+      <a href="#" class="nav-logo" aria-label="GleitFix">
+        <svg class="nav-logo-icon" viewBox="0 0 38 54" height="32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- Amber adapter bar -->
+          <rect x="0" y="0" width="38" height="11" rx="3" fill="#C4883A"/>
+          <!-- Glider body -->
+          <rect x="7" y="11" width="24" height="23" rx="4" fill="#EDEBE3" opacity="0.9"/>
+          <!-- Glider hook -->
+          <path d="M19 34 Q19 46 9 46 Q3 46 3 40" stroke="#EDEBE3" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+        <span class="nav-logo-text">GleitFix</span>
+      </a>
+      <div class="nav-right">
+        <div class="lang-toggle" aria-label="Sprache / Language">
+          <button class="lang-btn active" onclick="setLang('de')" id="btn-de" aria-pressed="true">DE</button>
+          <span class="lang-sep" aria-hidden="true">|</span>
+          <button class="lang-btn" onclick="setLang('en')" id="btn-en" aria-pressed="false">EN</button>
+        </div>
+        <a href="#pilot" class="nav-cta" data-de="Pilot anfragen" data-en="Request a Pilot">Pilot anfragen</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="shape shape-circle s1" aria-hidden="true"></div>
+    <div class="shape shape-plus s2" aria-hidden="true"></div>
+    <div class="shape shape-line s3" aria-hidden="true"></div>
+    <div class="shape shape-ring s4" aria-hidden="true"></div>
+    <div class="shape shape-plus s5" aria-hidden="true"></div>
+    <div class="shape shape-dot s6" aria-hidden="true"></div>
+    <div class="shape shape-dot s7" aria-hidden="true"></div>
+    <div class="shape shape-line s8" aria-hidden="true"></div>
+    <span class="hero-label"><span class="hero-label-inner" data-de="GLEITFIX - SCHWEIZER INNOVATION" data-en="GLEITFIX - SWISS INNOVATION">GLEITFIX - SCHWEIZER INNOVATION</span></span>
+    <div class="hero-lines">
+      <span class="hero-line"><span class="line-inner" data-de="Einmal laden." data-en="Load once.">Einmal laden.</span></span>
+      <span class="hero-line"><span class="line-inner" data-de="Einschieben." data-en="Slide in.">Einschieben.</span></span>
+      <span class="hero-line"><span class="line-inner" data-de="Fertig." data-en="Done.">Fertig.</span></span>
+    </div>
+    <p class="hero-sub" data-de="Das erste universelle Vorhang-Lade-System.<br>Alle Gleiter auf einmal - kein Leiter, kein Stress.<br>Entworfen in der Schweiz." data-en="The first universal curtain-glider loader.<br>All gliders at once - no ladder, no stress.<br>Made in Switzerland.">Das erste universelle Vorhang-Lade-System.<br>Alle Gleiter auf einmal - kein Leiter, kein Stress.<br>Entworfen in der Schweiz.</p>
+    <div class="btn-magnetic">
+      <a href="#pilot" class="btn-primary" data-de="Pilotprojekt anfragen <span class='arrow'>→</span>" data-en="Request a Pilot <span class='arrow'>→</span>">
+        Pilotprojekt anfragen <span class="arrow">&rarr;</span>
+      </a>
+    </div>
+    <div class="hero-scroll" aria-hidden="true">
+      <span>Scroll to discover</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <div class="section-divider"></div>
+  <section class="section problem">
+    <div class="shape shape-circle ps1" aria-hidden="true"></div>
+    <div class="shape shape-plus ps2" aria-hidden="true"></div>
+    <div class="container">
+      <div class="problem-content reveal-children">
+        <span class="label" data-de="Das Problem" data-en="The Problem">Das Problem</span>
+        <h2 data-de="Du kennst <em>das Gefühl.</em>" data-en="You know <em>the feeling.</em>">Du kennst <em>das Gefühl.</em></h2>
+        <p data-de="Arme über dem Kopf. Winzige Gleiter rutschen durch die Finger. Einer geht rein, drei fallen auf den Boden. Der Nacken schmerzt. Du stehst auf einer Leiter. Du hast jemanden um Hilfe gebeten - jetzt sind beide frustriert." data-en="Arms above your head. Tiny gliders slip through your fingers. One goes in, three fall to the floor. Your neck aches. You're on a ladder. You asked someone for help - now both of you are frustrated.">Arme über dem Kopf. Winzige Gleiter rutschen durch die Finger. Einer geht rein, drei fallen auf den Boden. Der Nacken schmerzt. Du stehst auf einer Leiter. Du hast jemanden um Hilfe gebeten - jetzt sind beide frustriert.</p>
+        <p data-de="Fünf Minuten später: ein Fenster geschafft. Noch vier weitere." data-en="Five minutes later: one window done. Four more to go.">Fünf Minuten später: ein Fenster geschafft. Noch vier weitere.</p>
+        <div class="stat">
+          <span class="stat-number" data-target="10">0</span>
+          <span class="stat-label" data-de="Minuten pro Fenster im Durchschnitt" data-en="minutes per window on average">Minuten pro Fenster im Durchschnitt</span>
+        </div>
+      </div>
+      <div class="problem-visual reveal">
+        <div class="img-reveal img-wipe">
+          <img src="images/ambience_pictures_tessa_dam_1343603_1200-1200.jpg" alt="Vorhanggleiter einzeln in Schiene einfädeln" class="img-scene" loading="lazy">
+        </div>
+        <span class="img-caption" data-de="Gleiter einzeln eingefädelt - der alte Weg" data-en="Gliders threaded one by one - the old way">Gleiter einzeln eingefädelt - der alte Weg</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLE - CURTAIN ANIMATION -->
+  <div class="section-divider"></div>
+  <section class="principle-section reveal">
+    <div class="container">
+      <div class="principle-inner">
+        <div class="principle-text">
+          <span class="label" data-de="Das Prinzip" data-en="How It Works">Das Prinzip</span>
+          <p class="tagline" data-de="Wie ein <em>Magazin</em> für Vorhanggleiter." data-en="Like a <em>magazine</em> for curtain gliders.">Wie ein <em>Magazin</em> für Vorhanggleiter.</p>
+          <p class="body" data-de="Statt jeden Gleiter einzeln von oben in die Schiene einzufädeln, lädst du alle auf einmal in Gleitfix - bequem auf Tischhöhe, stehend. Dann klickst du Gleitfix ans offene Schienenende. Ein Schub. Alle Gleiter gleiten gleichzeitig rein." data-en="Instead of threading each glider into the rail one by one from above, you load all of them into GleitFix at once - comfortably at table height. Then you clip GleitFix onto the open end of the rail. One push. All gliders slide in simultaneously.">Statt jeden Gleiter einzeln von oben in die Schiene einzufädeln, lädst du alle auf einmal in Gleitfix - bequem auf Tischhöhe, stehend. Dann klickst du Gleitfix ans offene Schienenende. Ein Schub. Alle Gleiter gleiten gleichzeitig rein.</p>
+          <div class="principle-steps">
+            <div class="ps-item"><span class="ps-num">1</span><span data-de="Gleiter bequem auf Tischhöhe in Gleitfix einfädeln" data-en="Load all gliders onto GleitFix at table height">Gleiter bequem auf Tischhöhe in Gleitfix einfädeln</span></div>
+            <div class="ps-item"><span class="ps-num">2</span><span data-de="Gleitfix ans offene Schienenende einclipsen" data-en="Clip GleitFix onto the open end of the rail">Gleitfix ans offene Schienenende einclipsen</span></div>
+            <div class="ps-item"><span class="ps-num">3</span><span data-de="Einmal schieben - alle Gleiter gleiten rein" data-en="One push - all gliders slide in at once">Einmal schieben - alle Gleiter gleiten rein</span></div>
+          </div>
+        </div>
+        <div class="curtain-scene-wrap">
+          <!-- SVG: technical cross-section animation of curtain rail + gliders -->
+          <svg id="curtainScene" viewBox="0 0 560 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animation: Vorhanggleiter werden per Gleitfix in die Schiene eingeschoben">
+            <defs>
+              <linearGradient id="railGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#363636"/>
+                <stop offset="35%" stop-color="#242424"/>
+                <stop offset="100%" stop-color="#181818"/>
+              </linearGradient>
+              <linearGradient id="railShine" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#505050" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#1a1a1a" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="adapterGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#F0B84A"/>
+                <stop offset="100%" stop-color="#B8791E"/>
+              </linearGradient>
+              <linearGradient id="adapterShine" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FFD080" stop-opacity="0.5"/>
+                <stop offset="50%" stop-color="#FFD080" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="fabricGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#D8D4CC" stop-opacity="0.22"/>
+                <stop offset="70%" stop-color="#C8C4BC" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#B8B4AC" stop-opacity="0.04"/>
+              </linearGradient>
+              <linearGradient id="ceilingGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#151515"/>
+                <stop offset="100%" stop-color="#101010"/>
+              </linearGradient>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- Ceiling / wall strip -->
+            <rect x="0" y="0" width="560" height="26" fill="url(#ceilingGrad)"/>
+            <rect x="0" y="24" width="560" height="1" fill="#222" opacity="0.6"/>
+
+            <!-- 4 mounting brackets from ceiling to rail -->
+            <rect x="76"  y="26" width="5" height="26" rx="1" fill="#2c2c2c"/>
+            <rect x="188" y="26" width="5" height="26" rx="1" fill="#2c2c2c"/>
+            <rect x="300" y="26" width="5" height="26" rx="1" fill="#2c2c2c"/>
+            <rect x="412" y="26" width="5" height="26" rx="1" fill="#2c2c2c"/>
+
+            <!-- Main aluminum rail body -->
+            <rect x="22" y="52" width="466" height="26" rx="3" fill="url(#railGrad)"/>
+            <!-- Top highlight (metallic sheen) -->
+            <rect x="22" y="52" width="466" height="5" rx="2" fill="url(#railShine)"/>
+            <!-- Internal channel cutaway (slightly lighter to show interior) -->
+            <rect x="27" y="62" width="456" height="12" rx="1" fill="#0e0e0e"/>
+            <!-- Slot opening line at bottom of channel -->
+            <rect x="27" y="73" width="456" height="2.5" fill="#080808"/>
+            <!-- Bottom face of rail -->
+            <rect x="22" y="76" width="466" height="2" rx="1" fill="#1e1e1e"/>
+
+            <!-- Right rail end-cap (with opening indicator) - where Gleitfix attaches -->
+            <rect x="484" y="52" width="4" height="26" rx="1" fill="#2a2a2a"/>
+            <!-- Opening: highlighted amber outline on right end -->
+            <rect x="485" y="62" width="2" height="12" fill="#D4903A" opacity="0.5"/>
+
+            <!-- ═══ GLIDERS - final positions inside rail ═══ -->
+            <!-- Each group: runner (ellipse inside channel) + stem + hook -->
+            <!-- GSAP will set initial x offset; all start at x=500 (Gleitfix position) -->
+
+            <g class="svgGlider" id="gl1"><!-- final x≈68 -->
+              <ellipse cx="68" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="66.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="68" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="68" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+            <g class="svgGlider" id="gl2"><!-- final x≈148 -->
+              <ellipse cx="148" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="146.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="148" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="148" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+            <g class="svgGlider" id="gl3"><!-- final x≈228 -->
+              <ellipse cx="228" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="226.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="228" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="228" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+            <g class="svgGlider" id="gl4"><!-- final x≈308 -->
+              <ellipse cx="308" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="306.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="308" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="308" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+            <g class="svgGlider" id="gl5"><!-- final x≈388 -->
+              <ellipse cx="388" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="386.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="388" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="388" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+            <g class="svgGlider" id="gl6"><!-- final x≈462 -->
+              <ellipse cx="462" cy="68" rx="9" ry="5.5" fill="#bdbdbd" opacity="0.95"/>
+              <rect x="460.5" y="74" width="3" height="17" rx="1" fill="#a0a0a0" opacity="0.85"/>
+              <circle cx="462" cy="93" r="4" fill="#D4903A" opacity="0.9" filter="url(#softGlow)"/>
+              <circle cx="462" cy="93" r="2" fill="#c07820" opacity="0.95"/>
+            </g>
+
+            <!-- ═══ CURTAIN FABRIC - fades in after gliders placed ═══ -->
+            <g id="curtainFabric" opacity="0">
+              <!-- Header tape (top strip of curtain) -->
+              <rect x="38" y="97" width="440" height="9" rx="1" fill="#D8D4CC" opacity="0.18"/>
+              <!-- Main fabric panel -->
+              <rect x="38" y="106" width="440" height="138" fill="url(#fabricGrad)"/>
+              <!-- Fabric fold lines (subtle vertical lines) -->
+              <line x1="110" y1="106" x2="110" y2="244" stroke="#F0EDE6" stroke-width="0.6" opacity="0.08"/>
+              <line x1="184" y1="106" x2="184" y2="244" stroke="#F0EDE6" stroke-width="0.6" opacity="0.08"/>
+              <line x1="258" y1="106" x2="258" y2="244" stroke="#F0EDE6" stroke-width="0.6" opacity="0.08"/>
+              <line x1="332" y1="106" x2="332" y2="244" stroke="#F0EDE6" stroke-width="0.6" opacity="0.08"/>
+              <line x1="406" y1="106" x2="406" y2="244" stroke="#F0EDE6" stroke-width="0.6" opacity="0.08"/>
+              <!-- Subtle horizontal shading lines (fabric texture) -->
+              <line x1="38" y1="150" x2="478" y2="150" stroke="#F0EDE6" stroke-width="0.4" opacity="0.05"/>
+              <line x1="38" y1="194" x2="478" y2="194" stroke="#F0EDE6" stroke-width="0.4" opacity="0.05"/>
+              <!-- Wavy bottom hem -->
+              <path d="M38 244 Q75 252 112 244 Q149 236 186 244 Q223 252 260 244 Q297 236 334 244 Q371 252 408 244 Q445 236 478 244 L478 248 Q445 240 408 248 Q371 256 334 248 Q297 240 260 248 Q223 256 186 248 Q149 240 112 248 Q75 256 38 248 Z" fill="#D8D4CC" opacity="0.1"/>
+            </g>
+
+            <!-- ═══ GLEITFIX ADAPTER ═══ -->
+            <g id="gleitfixAdapter">
+              <!-- Main amber body -->
+              <rect x="490" y="44" width="64" height="42" rx="4" fill="url(#adapterGrad)"/>
+              <!-- Top shine -->
+              <rect x="490" y="44" width="64" height="8" rx="3" fill="url(#adapterShine)"/>
+              <!-- Internal slot guide (shows it connects to rail channel) -->
+              <rect x="496" y="56" width="16" height="16" rx="2" fill="#0A0A0A" opacity="0.25"/>
+              <!-- Coupling notch (left face, connects to rail end) -->
+              <path d="M490 62 L484 62 L484 68 L490 68" fill="none" stroke="#D4903A" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- Label text -->
+              <text x="522" y="69" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="6.5" font-weight="700" letter-spacing="1.5" fill="#3a2200" opacity="0.65">GLEIT</text>
+              <text x="522" y="79" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="6.5" font-weight="700" letter-spacing="1.5" fill="#3a2200" opacity="0.65">FIX</text>
+              <!-- Push arrow (top right) -->
+              <text x="540" y="42" font-family="'DM Sans',sans-serif" font-size="11" fill="#D4903A" opacity="0.7">←</text>
+            </g>
+
+            <!-- ═══ PUSH LABEL - appears during animation ═══ -->
+            <g id="pushLabel" opacity="0">
+              <text x="280" y="42" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="400" letter-spacing="2" fill="#D4903A" opacity="0.75">← einmal schieben</text>
+            </g>
+
+            <!-- ═══ SUCCESS TICK ═══ -->
+            <g id="successTick" opacity="0">
+              <circle cx="280" cy="235" r="14" fill="#D4903A" opacity="0.12"/>
+              <path d="M273 235 L278 240 L288 230" stroke="#D4903A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+
+            <!-- Bottom label: rail type -->
+            <text x="245" y="48" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="7.5" letter-spacing="2.5" fill="#4a4a4a" opacity="0.9">VORHANGSCHIENE</text>
+          </svg>
+          <p class="curtain-caption">Vorhanggleiter · Aluminium-Schiene · Gleitfix-Adapter</p>
+          <button class="curtain-replay" id="curtainReplayBtn" onclick="replayCurtain()">&#8635; Nochmals</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-divider"></div>
+  <div class="how-outer">
+    <div class="container how-header reveal">
+      <span class="label" data-de="So funktioniert's" data-en="How It Works">So funktioniert's</span>
+      <h2 data-de="Drei Schritte.<br>Ein Schub." data-en="Three steps.<br>One push.">Drei Schritte.<br>Ein Schub.</h2>
+    </div>
+
+    <div class="how-pin-area">
+      <div class="how-track">
+        <div class="how-step">
+          <div class="how-step-inner">
+            <span class="step-number">01</span>
+            <div class="step-content">
+              <h3 data-de="Laden" data-en="Load">Laden</h3>
+              <p data-de="Schiebe alle Vorhanggleiter auf Gleitfix - auf Tischhöhe, bequem stehend. Kein Leiter. Kein Strecken." data-en="Slide all curtain gliders onto GleitFix - at table height, standing comfortably. No ladder. No reaching.">Schiebe alle Vorhanggleiter auf Gleitfix - auf Tischhöhe, bequem stehend. Kein Leiter. Kein Strecken.</p>
+            </div>
+          </div>
+          <div class="step-accent" aria-hidden="true"></div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-inner">
+            <span class="step-number">02</span>
+            <div class="step-content">
+              <h3 data-de="Einclipsen" data-en="Snap in">Einclipsen</h3>
+              <p data-de="Gleitfix ans offene Schienenende clipsen. Der Einrastmechanismus hält es sicher und präzise an Ort." data-en="Clip GleitFix onto the open end of the rail. The snap-fit mechanism holds it securely and precisely in place.">Gleitfix ans offene Schienenende clipsen. Der Einrastmechanismus hält es sicher und präzise an Ort.</p>
+            </div>
+          </div>
+          <div class="step-accent" aria-hidden="true"></div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-inner">
+            <span class="step-number">03</span>
+            <div class="step-content">
+              <h3 data-de="Einschieben" data-en="Slide in">Einschieben</h3>
+              <p data-de="Einmal schieben. Alle Gleiter gleiten gleichzeitig in die Schiene. Vorhang hängt. Das war's." data-en="One push. All gliders slide into the rail at once. Curtain hangs. Done.">Einmal schieben. Alle Gleiter gleiten gleichzeitig in die Schiene. Vorhang hängt. Das war's.</p>
+            </div>
+          </div>
+          <div class="step-accent" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-punchline-wrap">
+      <div class="container how-punchline reveal">
+        <p data-de="Was früher 5-10 Minuten pro Fenster dauerte, geht jetzt in <em>weniger als einer</em>." data-en="What once took 5-10 minutes per window <em>now takes under one</em>.">Was früher 5–10 Minuten pro Fenster dauerte,<br>geht jetzt in <em>weniger als einer</em>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APH -->
+  <div class="section-divider"></div>
+  <section class="section aph-section">
+    <div class="container">
+      <div class="aph-inner reveal">
+        <span class="label" data-de="Zuerst entwickelt für" data-en="First built for">Zuerst entwickelt für</span>
+        <h2 class="aph-headline" data-de="Alters- und Pflegeheime." data-en="Retirement and care homes.">Alters- und Pflegeheime.</h2>
+        <p class="aph-body" data-de="Vorhangwartung in Pflegebetrieben bedeutet üblicherweise zwei Pflegepersonen, eine Leiter und dreissig Minuten pro Fenster - Zeit, die den Bewohnern fehlt. Gleitfix wurde genau für dieses Umfeld entwickelt. Unser Pilotcluster läuft in der Surselva, Graubünden, mit Hauswirtschaftsteams in Schweizer APH. Ein Adapter, vorhandene Gleiter, drei bis fünf Minuten pro Fenster statt dreissig." data-en="Curtain maintenance in care facilities typically means two staff members, a ladder, and thirty minutes per window - time taken away from residents. Gleitfix was built for exactly this context. Our pilot cluster is running in the Surselva, Graubünden, with housekeeping teams across Swiss care homes. One adapter, your existing gliders, three to five minutes per window instead of thirty.">Vorhangwartung in Pflegebetrieben bedeutet üblicherweise zwei Pflegepersonen, eine Leiter und dreissig Minuten pro Fenster - Zeit, die den Bewohnern fehlt. Gleitfix wurde genau für dieses Umfeld entwickelt. Unser Pilotcluster läuft in der Surselva, Graubünden, mit Hauswirtschaftsteams in Schweizer APH. Ein Adapter, vorhandene Gleiter, drei bis fünf Minuten pro Fenster statt dreissig.</p>
+        <div class="aph-stats reveal-children">
+          <div class="aph-stat"><span class="aph-num">30→3</span><span class="aph-label" data-de="Minuten pro Fenster" data-en="minutes per window">Minuten pro Fenster</span></div>
+          <div class="aph-stat"><span class="aph-num">1</span><span class="aph-label" data-de="Pflegeperson statt zwei" data-en="housekeeper instead of two">Pflegeperson statt zwei</span></div>
+          <div class="aph-stat"><span class="aph-num">0</span><span class="aph-label" data-de="Leitern benötigt" data-en="ladders needed">Leitern benötigt</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTCOMES -->
+  <div class="section-divider"></div>
+  <section class="section outcomes">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Der Unterschied in Zahlen" data-en="The Difference in Numbers">Der Unterschied in Zahlen</span>
+        <h2 data-de="Vorher. <em>Nachher.</em>" data-en="Before. <em>After.</em>">Vorher. <em>Nachher.</em></h2>
+      </div>
+      <div class="outcomes-grid">
+        <div class="outcome-card reveal">
+          <p class="outcome-category" data-de="Montagezeit" data-en="Installation Time">Montagezeit</p>
+          <div class="outcome-transform">
+            <span class="outcome-before">30 min</span>
+            <span class="outcome-arrow">→</span>
+            <span class="outcome-after">5 min</span>
+          </div>
+          <p class="outcome-desc" data-de="Manuelle Einzelmontage auf der Leiter ersetzt durch einen einzigen Schub - bequem auf Tischhöhe, stehend." data-en="Glider-by-glider loading on a ladder, replaced by one push at table height. Standing. No climbing required.">Manuelle Einzelmontage auf der Leiter ersetzt durch einen einzigen Schub - bequem auf Tischhöhe, stehend.</p>
+        </div>
+        <div class="outcome-card reveal">
+          <p class="outcome-category" data-de="Personalaufwand" data-en="Staff Required">Personalaufwand</p>
+          <div class="outcome-transform">
+            <span class="outcome-before">2 Pers.</span>
+            <span class="outcome-arrow">→</span>
+            <span class="outcome-after">Solo</span>
+          </div>
+          <p class="outcome-desc" data-de="Keine zweite Person zum Halten, Reichen oder Sichern. Eine Pflegeperson erledigt den kompletten Vorhangwechsel alleine." data-en="No second person needed to hold, pass, or secure. One housekeeper completes the entire curtain change alone.">Keine zweite Person zum Halten, Reichen oder Sichern. Eine Pflegeperson erledigt den kompletten Vorhangwechsel alleine.</p>
+        </div>
+        <div class="outcome-card reveal">
+          <p class="outcome-category" data-de="Schienenprofil-Kompatibilität" data-en="Rail Compatibility">Schienenprofil-Kompatibilität</p>
+          <div class="outcome-transform">
+            <span class="outcome-before">1 Typ</span>
+            <span class="outcome-arrow">→</span>
+            <span class="outcome-after">Alle</span>
+          </div>
+          <p class="outcome-desc" data-de="Austauschbare Steckköpfe decken alle gängigen Schweizer Einputzschienen ab - ohne bestehende Gleiter zu ersetzen." data-en="Interchangeable snap-on heads fit all common Swiss recessed rail profiles - no need to replace your existing gliders.">Austauschbare Steckköpfe decken alle gängigen Schweizer Einputzschienen ab - ohne bestehende Gleiter zu ersetzen.</p>
+        </div>
+        <div class="outcome-card reveal">
+          <p class="outcome-category" data-de="Sicherheit" data-en="Safety">Sicherheit</p>
+          <div class="outcome-transform">
+            <span class="outcome-before">Leiter</span>
+            <span class="outcome-arrow">→</span>
+            <span class="outcome-after">Boden</span>
+          </div>
+          <p class="outcome-desc" data-de="Kein Leitern-Unfallrisiko. Kein Überstrecken. Der gesamte Vorgang findet auf Tischhöhe statt - sicher und ergonomisch." data-en="No ladder-fall risk. No overreaching. The entire process happens at table height - safe and ergonomic.">Kein Leitern-Unfallrisiko. Kein Überstrecken. Der gesamte Vorgang findet auf Tischhöhe statt - sicher und ergonomisch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <div class="section-divider"></div>
+  <section class="section features-section">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Das Service-Paket" data-en="The Service Package">Das Service-Paket</span>
+        <h2 data-de="Was im Paket enthalten ist." data-en="What's included.">Was im Paket enthalten ist.</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 8h2v6h10V8h2L8 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 data-de="Vor-Ort-Schienenanalyse" data-en="On-Site Rail Assessment">Vor-Ort-Schienenanalyse</h3>
+          <p data-de="Wir kommen zu Ihnen, erfassen alle Schienenvarianten und konfigurieren passende Adapter-Köpfe für Ihre Einrichtung." data-en="We come to you, record all rail variants, and configure the right adapter heads for your facility.">Wir kommen zu Ihnen, erfassen alle Schienenvarianten und konfigurieren passende Adapter-Köpfe für Ihre Einrichtung.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 data-de="Pilotinstallation" data-en="Pilot Installation">Pilotinstallation</h3>
+          <p data-de="Start in einer Station oder einem Flügel. Erst wenn das Team überzeugt ist, rollen wir auf das gesamte Haus aus." data-en="We start on one ward or wing. Once the team is confident, we scale to the full facility.">Start in einer Station oder einem Flügel. Erst wenn das Team überzeugt ist, rollen wir auf das gesamte Haus aus.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v6l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/></svg>
+          </div>
+          <h3 data-de="Mitarbeiterschulung" data-en="Staff Training">Mitarbeiterschulung</h3>
+          <p data-de="Praxisnahe Schulung des Hauswirtschaftsteams direkt vor Ort. Gleitfix ist in drei Minuten erklärt - und sofort anwendbar." data-en="Hands-on training for your housekeeping team, on site. Gleitfix takes three minutes to learn and is usable right away.">Praxisnahe Schulung des Hauswirtschaftsteams direkt vor Ort. Gleitfix ist in drei Minuten erklärt - und sofort anwendbar.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/><path d="M8 4v4l2.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <h3 data-de="Jahres-Support (optional)" data-en="Annual Support (optional)">Jahres-Support (optional)</h3>
+          <p data-de="Jährlicher Wartungsvertrag mit Auffrischungsschulung, Ersatzteilen und neuen Köpfen bei Schienenänderungen." data-en="Annual maintenance contract with refresher training, spare parts, and new heads for rail changes.">Jährlicher Wartungsvertrag mit Auffrischungsschulung, Ersatzteilen und neuen Köpfen bei Schienenänderungen.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8M8 4v8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <h3 data-de="Alle bestehenden Gleiter" data-en="All Your Existing Gliders">Alle bestehenden Gleiter</h3>
+          <p data-de="Funktioniert mit jedem Gleiter, den Ihre Einrichtung bereits besitzt. Kein Ersatz, kein proprietäres Ökosystem." data-en="Works with every glider type your facility already has. No replacements. No proprietary lock-in.">Funktioniert mit jedem Gleiter, den Ihre Einrichtung bereits besitzt. Kein Ersatz, kein proprietäres Ökosystem.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.5 4.5H14l-3.75 2.75L11.7 13 8 10.5 4.3 13l1.45-4.75L2 5.5h4.5L8 1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 data-de="Schweizer Designschutz" data-en="Swiss Design Protection">Schweizer Designschutz</h3>
+          <p data-de="Schweizer Designregistrierung und EU-Schutz der Snap-Fit-Geometrie. Entwickelt mit Hauswirtschaftsteams in der Surselva, Graubünden." data-en="Swiss design registration and EU snap-fit geometry protection. Developed with housekeeping teams in the Surselva, Graubünden.">Schweizer Designregistrierung und EU-Schutz der Snap-Fit-Geometrie. Entwickelt mit Hauswirtschaftsteams in der Surselva, Graubünden.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <div class="section-divider"></div>
+  <section class="section pricing-section">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Investition &amp; Pakete" data-en="Investment &amp; Plans">Investition &amp; Pakete</span>
+        <h2 data-de="Transparente Preise.<br>Keine Überraschungen." data-en="Transparent pricing.<br>No surprises.">Transparente Preise.<br>Keine Überraschungen.</h2>
+        <p class="pricing-sub" data-de="Gleitfix ist kein Produkt - es ist eine Workflow-Transformation. Deshalb liefern wir es als komplettes Service-Paket: von der Schienenanalyse bis zur Schulung Ihres Teams." data-en="Gleitfix is not just a product - it's a workflow transformation. We deliver it as a full service package: from rail assessment to team training.">Gleitfix ist kein Produkt - es ist eine Workflow-Transformation. Deshalb liefern wir es als komplettes Service-Paket: von der Schienenanalyse bis zur Schulung Ihres Teams.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card reveal">
+          <span class="pricing-badge pricing-badge-plain" data-de="Einstieg" data-en="Starter">Einstieg</span>
+          <h3 class="pricing-tier-name" data-de="Werkzeug-Paket" data-en="Tool Package">Werkzeug-Paket</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount">CHF 150–250</span>
+          </div>
+          <div class="pricing-items">
+            <div class="pricing-item" data-de="3–5 Adapter für Ihre Schienenprofile" data-en="3–5 adapters for your rail profiles">3–5 Adapter für Ihre Schienenprofile</div>
+            <div class="pricing-item" data-de="Profilspezifische Steckköpfe" data-en="Profile-matched snap-on heads">Profilspezifische Steckköpfe</div>
+            <div class="pricing-item" data-de="Installations-Kurzanleitung" data-en="Quick-start installation guide">Installations-Kurzanleitung</div>
+          </div>
+          <p class="pricing-note" data-de="Für kleinere Einrichtungen oder eigenständigen Einstieg." data-en="For smaller facilities or a self-guided start.">Für kleinere Einrichtungen oder eigenständigen Einstieg.</p>
+        </div>
+        <div class="pricing-card pricing-card-featured reveal">
+          <span class="pricing-badge pricing-badge-featured" data-de="Empfohlen" data-en="Recommended">Empfohlen</span>
+          <h3 class="pricing-tier-name" data-de="Service-Bundle" data-en="Service Bundle">Service-Bundle</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount">CHF 300–500</span>
+            <span class="pricing-period" data-de="pro Ersteinführung" data-en="per first engagement">pro Ersteinführung</span>
+          </div>
+          <div class="pricing-items">
+            <div class="pricing-item" data-de="Vor-Ort-Schienenanalyse" data-en="On-site rail assessment">Vor-Ort-Schienenanalyse</div>
+            <div class="pricing-item" data-de="Pilotinstallation in einer Station" data-en="Pilot installation on one ward">Pilotinstallation in einer Station</div>
+            <div class="pricing-item" data-de="Schulung des Hauswirtschaftsteams" data-en="Housekeeping team training">Schulung des Hauswirtschaftsteams</div>
+            <div class="pricing-item" data-de="Adapter-Set für das gesamte Haus" data-en="Full-facility adapter set">Adapter-Set für das gesamte Haus</div>
+          </div>
+          <p class="pricing-note" data-de="Das komplette Paket für APH, Hotels und Spitäler. Pilotiert erst - zahlt nach Überzeugung." data-en="The full package for care homes, hotels, and hospitals. Pilot first. Pay when you're convinced.">Das komplette Paket für APH, Hotels und Spitäler. Pilotiert erst - zahlt nach Überzeugung.</p>
+        </div>
+        <div class="pricing-card reveal">
+          <span class="pricing-badge pricing-badge-support" data-de="Optional ab Jahr 2" data-en="Optional from Year 2">Optional ab Jahr 2</span>
+          <h3 class="pricing-tier-name" data-de="Jahres-Support" data-en="Annual Support">Jahres-Support</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount">CHF 100–150</span>
+            <span class="pricing-period" data-de="/ Jahr" data-en="/ year">/ Jahr</span>
+          </div>
+          <div class="pricing-items">
+            <div class="pricing-item" data-de="Jährliche Auffrischungsschulung" data-en="Annual refresher training">Jährliche Auffrischungsschulung</div>
+            <div class="pricing-item" data-de="Ersatzteile &amp; Reserve-Köpfe" data-en="Spare parts &amp; reserve heads">Ersatzteile &amp; Reserve-Köpfe</div>
+            <div class="pricing-item" data-de="Neue Profile bei Schienenänderungen" data-en="New profiles for rail changes">Neue Profile bei Schienenänderungen</div>
+          </div>
+          <p class="pricing-note" data-de="Sichert langfristigen Betrieb. Hält Ihr Hauswirtschaftsteam gut ausgerüstet." data-en="Keeps your team current and your system running for the long term.">Sichert langfristigen Betrieb. Hält Ihr Hauswirtschaftsteam gut ausgerüstet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO IT'S FOR -->
+  <div class="section-divider"></div>
+  <section class="section audience">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Für wen" data-en="Who It's For">Für wen</span>
+        <h2 data-de="Von Pflegeheimen bis Facility Management.<br>Überall <em>derselbe Schmerz</em> - eine Lösung." data-en="From care homes to facility management.<br><em>The same problem</em> everywhere - one solution.">Von Pflegeheimen bis Facility Management.<br>Überall <em>derselbe Schmerz</em> - eine Lösung.</h2>
+      </div>
+      <div class="audience-grid">
+        <div class="audience-card reveal">
+          <div class="card-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 6v8h4v-4h6v4h4V6L8 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="card-label" data-de="APH Hauswirtschaft · Beachhead" data-en="Care Home Housekeeping · Beachhead">APH Hauswirtschaft · Beachhead</span>
+          <h3 data-de="Pflegeheime, gelöst." data-en="Care homes, solved.">Pflegeheime, gelöst.</h3>
+          <p data-de="2.500 Alters- und Pflegeheime in der Deutschschweiz. Saisonal Vorhänge an Dutzenden Fenstern - heute 30 Minuten, 2 Personen, Leiter. Mit Gleitfix: 5 Minuten, solo, am Boden." data-en="2,500 care homes in German-speaking Switzerland. Seasonal curtain changes at dozens of windows - currently 30 minutes, 2 people, a ladder. With Gleitfix: 5 minutes, solo, on the ground.">2.500 Alters- und Pflegeheime in der Deutschschweiz. Saisonal Vorhänge an Dutzenden Fenstern - heute 30 Minuten, 2 Personen, Leiter. Mit Gleitfix: 5 Minuten, solo, am Boden.</p>
+        </div>
+        <div class="audience-card reveal">
+          <div class="card-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h12v9H2z" stroke="currentColor" stroke-width="1.2"/><path d="M5 5V3h6v2" stroke="currentColor" stroke-width="1.2"/><path d="M8 9v3M6 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <span class="card-label" data-de="Hotellerie" data-en="Hospitality">Hotellerie</span>
+          <h3 data-de="Hotels. Jährlich. Effizient." data-en="Hotels. Every season. Every room.">Hotels. Jährlich. Effizient.</h3>
+          <p data-de="5.700 registrierte Hotels in der Schweiz mit regelmässigem Vorhangwechsel in Dutzenden Zimmern. Gleiche operative Logik wie APH - idealer nächster Schritt." data-en="5,700 registered hotels in Switzerland change curtains across dozens of rooms every season. Same operational logic as care homes - the natural next step for GleitFix.">5.700 registrierte Hotels in der Schweiz mit regelmässigem Vorhangwechsel in Dutzenden Zimmern. Gleiche operative Logik wie APH - idealer nächster Schritt.</p>
+        </div>
+        <div class="audience-card reveal">
+          <div class="card-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14V5l6-4 6 4v9" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 14V9h2v5" stroke="currentColor" stroke-width="1.2"/><path d="M5 7h1M10 7h1M5 10h1M10 10h1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <span class="card-label" data-de="Spitäler &amp; Kliniken" data-en="Hospitals &amp; Clinics">Spitäler &amp; Kliniken</span>
+          <h3 data-de="Hygiene. Ohne Aufwand." data-en="Hygiene. Without the hassle.">Hygiene. Ohne Aufwand.</h3>
+          <p data-de="Reguläre Vorhangwechsel sind in Spitälern Pflicht. Gleitfix reduziert den Zeitaufwand radikal - ohne Eingriff ins bestehende Schienensystem." data-en="Curtain changes are a regulatory requirement in hospitals. GleitFix cuts the time per window drastically - without touching the existing rail installation.">Reguläre Vorhangwechsel sind in Spitälern Pflicht. Gleitfix reduziert den Zeitaufwand radikal - ohne Eingriff ins bestehende Schienensystem.</p>
+        </div>
+        <div class="audience-card reveal">
+          <div class="card-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <span class="card-label" data-de="Facility Management" data-en="Facility Management">Facility Management</span>
+          <h3 data-de="Portfolio-Rollout.<br>Eine Schulung." data-en="Portfolio rollout.<br>One training session.">Portfolio-Rollout.<br>Eine Schulung.</h3>
+          <p data-de="Facility-Manager, die mehrere Liegenschaften betreuen, profitieren doppelt: eine Einschulung, ein System, alle Standorte - standardisiert und skalierbar." data-en="Facility managers running multiple properties benefit most: one training session, one system, every site - standardised and fully scalable.">Facility-Manager, die mehrere Liegenschaften betreuen, profitieren doppelt: eine Einschulung, ein System, alle Standorte - standardisiert und skalierbar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFFERENTIATOR -->
+  <div class="section-divider"></div>
+  <section class="section differentiator">
+    <div class="container">
+      <div class="diff-images reveal">
+        <div class="img-reveal img-wipe">
+          <img src="images/product_pictures_tessa_dam_1349275_1200-1200.jpg" alt="Querschnitt Vorhangschiene mit Gleiter" class="img-dark" loading="lazy">
+          <span class="img-label">Innenkanal &amp; Gleiter</span>
+        </div>
+        <div class="img-reveal img-wipe">
+          <img src="images/main_product_picture_tessa_dam_1349279_1200-1200.jpg" alt="3D-Ansicht Aluminium-Schienenprofil" class="img-dark-warm" loading="lazy">
+          <span class="img-label">Schienenprofil, Universalfit</span>
+        </div>
+      </div>
+      <div class="reveal">
+        <span class="label" data-de="Der Unterschied" data-en="The Difference">Der Unterschied</span>
+        <h2 data-de="Ein Adapter.<br>Jedes Schienenprofil." data-en="One adapter.<br>Every rail profile.">Ein Adapter.<br>Jedes Schienenprofil.</h2>
+        <p class="diff-body" data-de="Eingelassene Vorhangschienen gibt es in verschiedenen Profilen. Die meisten Lösungen passen nur für eine einzige. GleitFix' modulares Kopfsystem rastet bei den gängigsten Typen in der Schweiz, Deutschland und Österreich ein." data-en="Recessed curtain rails come in multiple profiles. Most tools only fit one. GleitFix's modular head system snaps onto the most common types across Switzerland, Germany, and Austria.">Eingelassene Vorhangschienen gibt es in verschiedenen Profilen. Die meisten Lösungen passen nur für eine einzige. Gleitfix' modulares Kopfsystem rastet bei den gängigsten Typen in der Schweiz, Deutschland und Österreich ein.</p>
+      </div>
+      <div class="rail-profiles">
+        <div class="rail-profile reveal">
+          <svg viewBox="0 0 140 80" fill="none">
+            <path class="draw-path" d="M15 12 L15 68 L125 68 L125 12" stroke="#4A8C7B" stroke-width="1.2"/>
+            <path class="draw-path" d="M42 12 L42 4 L98 4 L98 12" stroke="#4A8C7B" stroke-width="1.2"/>
+            <circle class="glider-dot" cx="70" cy="40" r="3.5" fill="#C4883A" opacity="0.5"/>
+            <circle class="glider-dot" cx="70" cy="40" r="7" stroke="#C4883A" stroke-width="0.4" opacity="0.15"/>
+          </svg>
+          <span data-de="Standard U-Profil" data-en="Standard U-Profile">Standard U-Profil</span>
+        </div>
+        <div class="rail-profile reveal">
+          <svg viewBox="0 0 140 80" fill="none">
+            <path class="draw-path" d="M15 20 L15 68 L125 68 L125 20" stroke="#4A8C7B" stroke-width="1.2"/>
+            <path class="draw-path" d="M15 20 L32 6 L108 6 L125 20" stroke="#4A8C7B" stroke-width="1.2"/>
+            <path class="draw-path" d="M48 6 L48 0 L92 0 L92 6" stroke="#4A8C7B" stroke-width="1.2"/>
+            <circle class="glider-dot" cx="70" cy="40" r="3.5" fill="#C4883A" opacity="0.5"/>
+            <circle class="glider-dot" cx="70" cy="40" r="7" stroke="#C4883A" stroke-width="0.4" opacity="0.15"/>
+          </svg>
+          <span data-de="Konisches Profil" data-en="Conical Profile">Konisches Profil</span>
+        </div>
+        <div class="rail-profile reveal">
+          <svg viewBox="0 0 140 80" fill="none">
+            <path class="draw-path" d="M25 12 L25 68 L115 68 L115 12" stroke="#4A8C7B" stroke-width="1.2"/>
+            <path class="draw-path" d="M25 12 L10 12 L10 68 L25 68" stroke="#4A8C7B" stroke-width="0.7" stroke-dasharray="3 2" opacity="0.3"/>
+            <path class="draw-path" d="M115 12 L130 12 L130 68 L115 68" stroke="#4A8C7B" stroke-width="0.7" stroke-dasharray="3 2" opacity="0.3"/>
+            <path class="draw-path" d="M48 12 L48 3 L92 3 L92 12" stroke="#4A8C7B" stroke-width="1.2"/>
+            <circle class="glider-dot" cx="70" cy="40" r="3.5" fill="#C4883A" opacity="0.5"/>
+            <circle class="glider-dot" cx="70" cy="40" r="7" stroke="#C4883A" stroke-width="0.4" opacity="0.15"/>
+          </svg>
+          <span data-de="Breitkanal-Profil" data-en="Wide-Channel Profile">Breitkanal-Profil</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CREDIBILITY -->
+  <div class="section-divider"></div>
+  <section class="section credibility">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Warum uns vertrauen" data-en="Why Trust Us">Warum uns vertrauen</span>
+        <h2 data-de="Entworfen in der Schweiz.<br>Entwickelt mit Präzision." data-en="Designed in Switzerland.<br>Built to last.">Entworfen in der Schweiz.<br>Entwickelt mit Präzision.</h2>
+        <p class="credibility-body" data-de="Gleitfix entsteht im Rahmen eines Projekts an der BFH (Berner Fachhochschule). Über ein Dutzend potenzielle Nutzer wurden befragt - 70&nbsp;% bestätigten das Problem ohne Nachfragen. Prototypen werden aktuell gefertigt." data-en="GleitFix is being developed through a project at BFH (Bern University of Applied Sciences). Over a dozen potential users were interviewed - 70% confirmed the problem without prompting. Prototypes are currently in production.">Gleitfix entsteht im Rahmen eines Projekts an der BFH (Berner Fachhochschule). Über ein Dutzend potenzielle Nutzer wurden befragt - 70&nbsp;% bestätigten das Problem ohne Nachfragen. Prototypen werden aktuell gefertigt.</p>
+      </div>
+      <div class="credibility-stats reveal">
+        <div class="cred-stat">
+          <span class="cred-number" data-target="70">0</span>
+          <span class="cred-label" data-de="bestätigten das Problem ungefragt" data-en="confirmed the problem unprompted">bestätigten das Problem ungefragt</span>
+        </div>
+        <div class="cred-stat">
+          <span class="cred-number" data-target="12">0</span>
+          <span class="cred-label" data-de="Nutzerinterviews geführt" data-en="user interviews conducted">Nutzerinterviews geführt</span>
+        </div>
+        <div class="cred-stat">
+          <span class="cred-number" data-target="4">0</span>
+          <span class="cred-label" data-de="Schienenprofil-Varianten entwickelt" data-en="rail profile variants engineered">Schienenprofil-Varianten entwickelt</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDER -->
+  <div class="section-divider"></div>
+  <section class="section founder-section">
+    <div class="container">
+      <div class="reveal"><span class="label" data-de="Der Gründer" data-en="The Founder">Der Gründer</span></div>
+      <div class="founder-inner reveal">
+        <div class="founder-avatar">
+          <span class="founder-initials">NT</span>
+        </div>
+        <div>
+          <p class="founder-name">Nicola Thöni</p>
+          <p class="founder-title" data-de="Gründer &amp; Erfinder - GleitFix" data-en="Founder &amp; Inventor - GleitFix">Gründer &amp; Erfinder - GleitFix</p>
+          <blockquote class="founder-quote" data-de="«Ich habe das Problem selbst erlebt - beim Vorhangwechsel im APH. Zwei Pflegepersonen, eine Leiter, dreissig Minuten pro Fenster. Das muss nicht so sein.»" data-en="&ldquo;I experienced the problem first-hand - changing curtains in a care home. Two staff members, a ladder, thirty minutes per window. It doesn&rsquo;t have to be this way.&rdquo;">
+            «Ich habe das Problem selbst erlebt - beim Vorhangwechsel im APH. Zwei Pflegepersonen, eine Leiter, dreissig Minuten pro Fenster. Das muss nicht so sein.»
+          </blockquote>
+          <div class="founder-trust">
+            <div class="founder-trust-item" data-de="Studium MSc Entrepreneurship and Business Innovation" data-en="MSc Entrepreneurship &amp; Business Innovation">Studium MSc Entrepreneurship and Business Innovation</div>
+            <div class="founder-trust-item" data-de="Pilotprojekt mit APH-Betrieben, Surselva Graubünden" data-en="Pilot project with care home facilities, Surselva Graubünden">Pilotprojekt mit APH-Betrieben, Surselva Graubünden</div>
+            <div class="founder-trust-item" data-de="Schweizer Design- und Qualitätsanspruch" data-en="Swiss design and quality standards">Schweizer Design- und Qualitätsanspruch</div>
+            <div class="founder-trust-item" data-de="Praxiserfahrung in Alters- und Pflegeheime" data-en="Hands-on experience in retirement and nursing homes">Praxiserfahrung in Alters- und Pflegeheime</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <div class="section-divider"></div>
+  <section class="section testimonials-section">
+    <div class="container">
+      <div class="reveal">
+        <span class="label" data-de="Frühe Nutzer" data-en="Early Users">Frühe Nutzer</span>
+        <h2 data-de="Was andere sagen." data-en="What others say.">Was andere sagen.</h2>
+      </div>
+      <div class="reveal">
+        <div class="tgrid" id="tgrid">
+          <div class="tcard tcard-active">
+            <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+            <p class="tcard-text">«Endlich! Ich habe immer zwei Personen gebraucht beim Vorhangwechsel. Mit Gleitfix schaffe ich es alleine - und in einem Bruchteil der Zeit.»</p>
+            <div class="tcard-author">
+              <span class="tcard-name">Monika S.</span>
+              <span class="tcard-role">Hauswirtschaftsleiterin, APH Zürich</span>
+            </div>
+          </div>
+          <div class="tcard">
+            <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+            <p class="tcard-text">«Wir wechseln die Vorhänge im ganzen Haus jetzt innerhalb von zwei Stunden. Früher hat das den halben Tag gedauert. Das ist echter Mehrwert.»</p>
+            <div class="tcard-author">
+              <span class="tcard-name">Andreas M.</span>
+              <span class="tcard-role">Heimleiter, Pflegezentrum Graubünden</span>
+            </div>
+          </div>
+          <div class="tcard">
+            <div class="tcard-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+            <p class="tcard-text">«So simpel und trotzdem so genial. Ich frage mich ehrlich, warum das nicht schon längst jemand gemacht hat.»</p>
+            <div class="tcard-author">
+              <span class="tcard-name">Sandra K.</span>
+              <span class="tcard-role">Inneneinrichterin, Bern</span>
+            </div>
+          </div>
+        </div>
+        <div class="carousel-nav" id="carouselNav">
+          <button class="carousel-dot active" data-idx="0" aria-label="1"></button>
+          <button class="carousel-dot" data-idx="1" aria-label="2"></button>
+          <button class="carousel-dot" data-idx="2" aria-label="3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="section-divider"></div>
+  <section class="section cta-section" id="pilot">
+    <div class="shape shape-circle cs1" aria-hidden="true"></div>
+    <div class="shape shape-plus cs2" aria-hidden="true"></div>
+    <div class="shape shape-line cs3" aria-hidden="true"></div>
+    <div class="shape shape-ring cs4" aria-hidden="true"></div>
+    <div class="container">
+      <div class="reveal">
+        <h2 data-de="Starten Sie Ihr<br>Pilotprojekt." data-en="Start your<br>pilot project.">Starten Sie Ihr<br>Pilotprojekt.</h2>
+        <p class="cta-sub" data-de="Hinterlassen Sie Ihre E-Mail. Wir melden uns innerhalb von 24 Stunden für einen ersten Gesprächstermin." data-en="Leave your email and we'll reach out within 24 hours to set up a first call.">Hinterlassen Sie Ihre E-Mail. Wir melden uns innerhalb von 24 Stunden für einen ersten Gesprächstermin.</p>
+        <div class="cta-form-wrap">
+          <div class="cta-form-glow" aria-hidden="true"></div>
+          <div class="cta-form" id="signup-form">
+            <input type="email" id="signup-email" placeholder="Ihre E-Mail-Adresse" required autocomplete="email" aria-label="E-Mail-Adresse" data-de="Ihre E-Mail-Adresse" data-en="Your email address">
+            <button type="button" onclick="handleSignup()" data-de="Pilot anfragen" data-en="Request a pilot">Pilot anfragen</button>
+          </div>
+        </div>
+        <p class="cta-fine" data-de="Kein Spam. Kein Commitment. Nur ein Gespräch." data-en="No spam. No commitment. Just a conversation.">Kein Spam. Kein Commitment. Nur ein Gespräch.</p>
+        <div id="signup-toast" style="display:none;position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A1A;border:1px solid rgba(212,144,58,.35);border-radius:100px;padding:.85rem 2rem;color:#F0EDE6;font-family:'DM Sans',sans-serif;font-size:.9rem;z-index:9999;opacity:0;transition:opacity .4s,transform .4s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+          <span style="color:#D4903A;margin-right:.6rem;">✓</span><span id="toast-msg">Anfrage erhalten. Wir melden uns.</span>
+          <button onclick="closeToast()" style="background:none;border:none;color:#6B6B63;cursor:pointer;margin-left:1rem;font-size:1rem;line-height:1;padding:0;">×</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="container">
+      <a href="#" class="back-to-top" data-de="Zurück nach oben" data-en="Back to top"><span class="top-arrow"></span>Zurück nach oben</a>
+      <p class="footer-brand" data-de="GleitFix &ensp;&middot;&ensp; Entworfen in der Schweiz &ensp;&middot;&ensp; &copy; 2026 GleitFix &middot; Nicola Thöni" data-en="GleitFix &ensp;&middot;&ensp; Designed in Switzerland &ensp;&middot;&ensp; &copy; 2026 GleitFix &middot; Nicola Thöni">GleitFix &ensp;&middot;&ensp; Entworfen in der Schweiz &ensp;&middot;&ensp; &copy; 2026 GleitFix &middot; Nicola Thöni</p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script>
+  // ── Language toggle ──
+  let currentLang = 'de';
+  const toastMessages = { de: 'Anfrage erhalten. Wir melden uns.', en: 'Request received. We\'ll be in touch.' };
+  const emailPlaceholders = { de: 'Ihre E-Mail-Adresse', en: 'Your email address' };
+
+  function setLang(lang) {
+    if (lang === currentLang) return;
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.getElementById('btn-de').classList.toggle('active', lang === 'de');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-de').setAttribute('aria-pressed', lang === 'de');
+    document.getElementById('btn-en').setAttribute('aria-pressed', lang === 'en');
+
+    // Update all elements with data-de / data-en
+    document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (el.tagName === 'INPUT') {
+        el.placeholder = val;
+      } else if (el.tagName === 'A' && el.querySelector('.top-arrow')) {
+        // Preserve inner SVG/span elements - only update the text node
+        const span = el.querySelector('.top-arrow');
+        el.innerHTML = '';
+        el.appendChild(span);
+        el.insertAdjacentText('beforeend', val);
+      } else {
+        el.innerHTML = val;
+      }
+    });
+
+    // Email placeholder (input element)
+    const emailInput = document.getElementById('signup-email');
+    if (emailInput) emailInput.placeholder = emailPlaceholders[lang];
+
+    // Toast message
+    const toastMsg = document.getElementById('toast-msg');
+    if (toastMsg) toastMsg.textContent = toastMessages[lang];
+  }
+
+  // ── Signup toast ──
+  function handleSignup(){
+    const inp=document.getElementById('signup-email'),toast=document.getElementById('signup-toast');
+    if(!inp.value||!inp.validity.valid){inp.style.borderColor='rgba(181,83,64,.6)';inp.focus();setTimeout(()=>{inp.style.borderColor=''},2000);return;}
+    toast.style.display='block';requestAnimationFrame(()=>{toast.style.opacity='1';toast.style.transform='translateX(-50%) translateY(0)'});
+    inp.value='';setTimeout(closeToast,5000);
+  }
+  function closeToast(){const t=document.getElementById('signup-toast');t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';setTimeout(()=>{t.style.display='none'},400)}
+  document.getElementById('signup-email').addEventListener('keydown',e=>{if(e.key==='Enter')handleSignup();});
+
+  // ── Testimonial dots ──
+  (function(){
+    const dots=document.querySelectorAll('.carousel-dot');
+    const cards=document.querySelectorAll('.tcard');
+    let cur=0,timer;
+    function goTo(i){
+      cur=i;
+      dots.forEach((d,j)=>d.classList.toggle('active',j===i));
+      cards.forEach((c,j)=>c.classList.toggle('tcard-active',j===i));
+    }
+    function auto(){timer=setInterval(()=>goTo((cur+1)%dots.length),5000)}
+    dots.forEach(d=>{d.addEventListener('click',()=>{clearInterval(timer);goTo(+d.dataset.idx);auto()})});
+    auto();
+  })();
+
+  // ── Curtain SVG animation ──
+  const finalXs=[68,148,228,308,388,462]; // SVG x of each glider final position
+  const adapterX=490; // SVG x of Gleitfix adapter
+  let curtainTL=null;
+
+  function buildCurtainTL(){
+    if(curtainTL){curtainTL.kill();curtainTL=null;}
+    const gliders=document.querySelectorAll('.svgGlider');
+    // Reset
+    gliders.forEach((g,i)=>gsap.set(g,{x:adapterX-finalXs[i]})); // all start at adapter x
+    gsap.set('#curtainFabric',{opacity:0});
+    gsap.set('#gleitfixAdapter',{x:0,opacity:1});
+    gsap.set('#pushLabel',{opacity:0});
+    gsap.set('#successTick',{opacity:0});
+
+    curtainTL=gsap.timeline({paused:true});
+    // 1) Adapter snaps to rail end (slight right-then-snap motion)
+    curtainTL.to('#gleitfixAdapter',{x:6,duration:.15,ease:'power2.in'},0);
+    curtainTL.to('#gleitfixAdapter',{x:-4,duration:.2,ease:'back.out(6)'},.15);
+    // 2) Push label appears
+    curtainTL.to('#pushLabel',{opacity:1,duration:.3},.35);
+    // 3) Gliders slide left into rail, staggered
+    curtainTL.to(gliders,{x:0,stagger:.08,duration:.85,ease:'power3.out'},.45);
+    // 4) Adapter slides away right as gliders enter
+    curtainTL.to('#gleitfixAdapter',{x:52,opacity:0,duration:.5,ease:'power2.in'},.8);
+    // 5) Push label fades
+    curtainTL.to('#pushLabel',{opacity:0,duration:.3},1.0);
+    // 6) Curtain fabric fades in
+    curtainTL.to('#curtainFabric',{opacity:1,duration:.9,ease:'power2.out'},1.1);
+    // 7) Success tick
+    curtainTL.to('#successTick',{opacity:1,duration:.4,ease:'back.out(2)'},1.7);
+    return curtainTL;
+  }
+
+  function replayCurtain(){buildCurtainTL().play();}
+
+  const prefersReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ── Loader ──
+  const loader=document.querySelector('.loader');
+  if(!prefersReducedMotion&&loader){
+    setTimeout(()=>{
+      loader.style.transition='opacity .6s,visibility .6s';
+      loader.style.opacity='0';loader.style.visibility='hidden';
+      document.body.classList.remove('loading');startAnimations();
+    },1600);
+  } else {
+    if(loader)loader.style.display='none';
+    document.body.classList.remove('loading');
+    if(!prefersReducedMotion)startAnimations();
+  }
+
+  function startAnimations(){
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Cursor glow
+    const glow=document.querySelector('.cursor-glow');
+    let gX=0,gY=0,cX=-500,cY=-500;
+    document.addEventListener('mousemove',e=>{cX=e.clientX;cY=e.clientY});
+    (function tick(){gX+=(cX-gX)*.06;gY+=(cY-gY)*.06;glow.style.left=gX+'px';glow.style.top=gY+'px';requestAnimationFrame(tick)})();
+
+    // Orbs
+    gsap.to('.orb-1',{x:30,y:-20,duration:12,repeat:-1,yoyo:true,ease:'sine.inOut'});
+    gsap.to('.orb-2',{x:-25,y:15,duration:10,repeat:-1,yoyo:true,ease:'sine.inOut'});
+
+    // Scroll progress
+    const prog=document.querySelector('.scroll-progress');
+    ScrollTrigger.create({trigger:document.body,start:'top top',end:'bottom bottom',onUpdate:s=>prog.style.width=(s.progress*100)+'%'});
+
+    // Nav scroll state
+    ScrollTrigger.create({start:'top -50',onUpdate:s=>document.querySelector('nav').classList.toggle('scrolled',s.progress>0)});
+
+    // Rail parallax
+    const railEl=document.querySelector('.rail-parallax');
+    gsap.to(railEl,{xPercent:-30,ease:'none',scrollTrigger:{trigger:document.body,start:'top top',end:'bottom bottom',scrub:.8,
+      onUpdate:s=>railEl.classList.toggle('visible',s.progress>.08&&s.progress<.85)}});
+
+    // Hero entrance
+    const htl=gsap.timeline({defaults:{ease:'power4.out'},delay:.2});
+    htl.from('.hero-label-inner',{y:'100%',duration:.9})
+       .from('.hero-line .line-inner',{y:'115%',rotation:3,stagger:.12,duration:1.3},'-=.5')
+       .from('.hero-sub',{y:30,opacity:0,duration:1},'-=.5')
+       .from('.btn-magnetic',{y:20,opacity:0,duration:.8},'-=.5')
+       .from('.hero-scroll',{opacity:0,duration:1.5},'-=.3');
+
+    // Hero shapes parallax
+    gsap.utils.toArray('.hero .shape').forEach((s,i)=>{
+      gsap.to(s,{y:[55,-70,35,-55,45,-25,60,40][i%8],rotation:[10,-7,4,-12,8,-4,6,-9][i%8],ease:'none',
+        scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:.6}});
+    });
+    gsap.to('.hero-lines',{y:-80,opacity:0,ease:'none',scrollTrigger:{trigger:'.hero',start:'55% top',end:'bottom top',scrub:true}});
+    gsap.to('.hero-sub',{y:-40,opacity:0,ease:'none',scrollTrigger:{trigger:'.hero',start:'65% top',end:'bottom top',scrub:true}});
+
+    // Section dividers
+    gsap.utils.toArray('.section-divider').forEach(d=>{
+      ScrollTrigger.create({trigger:d,start:'top 92%',onEnter:()=>d.classList.add('swept'),once:true});
+    });
+
+    // Reveal elements
+    gsap.utils.toArray('.reveal').forEach(el=>{
+      gsap.to(el,{y:0,opacity:1,duration:1.2,ease:'power3.out',
+        scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'}});
+    });
+
+    // Staggered children
+    gsap.utils.toArray('.reveal-children').forEach(p=>{
+      gsap.to(p.children,{y:0,opacity:1,stagger:.1,duration:1,ease:'power3.out',
+        scrollTrigger:{trigger:p,start:'top 85%',toggleActions:'play none none none'}});
+    });
+
+    // Counters
+    gsap.utils.toArray('[data-target]').forEach(el=>{
+      const target=parseInt(el.dataset.target);
+      let suf='';
+      if(el.classList.contains('cred-number')){
+        const l=el.nextElementSibling;
+        if(l&&l.textContent.includes('bestätigten'))suf='%';
+        else if(l&&l.textContent.includes('Interviews'))suf='+';
+      }
+      const o={val:0};
+      gsap.to(o,{val:target,duration:2.4,ease:'power2.out',
+        scrollTrigger:{trigger:el,start:'top 88%',toggleActions:'play none none none'},
+        onUpdate:()=>{el.textContent=Math.round(o.val)+suf}});
+    });
+
+    // Image wipes
+    gsap.utils.toArray('.img-wipe').forEach((img,i)=>{
+      ScrollTrigger.create({trigger:img,start:'top 85%',
+        onEnter:()=>setTimeout(()=>img.classList.add('revealed'),i*150),once:true});
+    });
+
+    // Rail profile draw-on
+    gsap.utils.toArray('.rail-profile').forEach(c=>{
+      ScrollTrigger.create({trigger:c,start:'top 85%',onEnter:()=>c.classList.add('drawn'),once:true});
+    });
+
+    // Curtain animation trigger
+    buildCurtainTL();
+    ScrollTrigger.create({
+      trigger:'#curtainScene',start:'top 70%',once:true,
+      onEnter:()=>setTimeout(()=>curtainTL.play(),200)
+    });
+
+    // Problem shapes
+    gsap.utils.toArray('.problem .shape').forEach((s,i)=>{
+      gsap.to(s,{y:[35,-45][i%2],rotation:[6,-5][i%2],ease:'none',
+        scrollTrigger:{trigger:'.problem',start:'top bottom',end:'bottom top',scrub:.5}});
+    });
+
+    // CTA shapes
+    gsap.utils.toArray('.cta-section .shape').forEach((s,i)=>{
+      gsap.to(s,{y:[45,-35,25,-40][i%4],rotation:[8,-10,5,-7][i%4],ease:'none',
+        scrollTrigger:{trigger:'.cta-section',start:'top bottom',end:'bottom top',scrub:.5}});
+    });
+
+    // Horizontal scroll (desktop, sufficient height)
+    if(window.innerWidth>=768&&window.innerHeight>=700){
+      const track=document.querySelector('.how-track');
+      const dotsEl=document.querySelector('.how-dots');
+      const dotEls=document.querySelectorAll('.how-dot');
+      gsap.to(track,{xPercent:-66.666,ease:'none',scrollTrigger:{
+        trigger:'.how-pin-area',pin:true,scrub:1,
+        end:()=>'+='+(track.scrollWidth-window.innerWidth),
+        invalidateOnRefresh:true,
+        onEnter:()=>dotsEl.classList.add('visible'),
+        onLeave:()=>dotsEl.classList.remove('visible'),
+        onEnterBack:()=>dotsEl.classList.add('visible'),
+        onLeaveBack:()=>dotsEl.classList.remove('visible'),
+        onUpdate:s=>{const step=Math.min(2,Math.floor(s.progress*3));dotEls.forEach((d,i)=>d.classList.toggle('active',i===step))}
+      }});
+    } else if(window.innerWidth>=768){
+      // short screens: stack
+      const track=document.querySelector('.how-track');
+      if(track){track.style.flexDirection='column';track.style.width='100%';track.style.height='auto';
+        document.querySelectorAll('.how-step').forEach(s=>{s.style.width='100%';s.style.height='auto';s.style.padding='4rem clamp(1.5rem,5vw,4rem)'});}
+    }
+
+    // Magnetic button
+    const mag=document.querySelector('.btn-magnetic');
+    if(mag){
+      const btn=mag.querySelector('.btn-primary');
+      mag.addEventListener('mousemove',e=>{const r=mag.getBoundingClientRect();gsap.to(btn,{x:(e.clientX-r.left-r.width/2)*.25,y:(e.clientY-r.top-r.height/2)*.25,duration:.4,ease:'power2.out'})});
+      mag.addEventListener('mouseleave',()=>gsap.to(btn,{x:0,y:0,duration:.7,ease:'elastic.out(1,.35)'}));
+    }
+  }
+
+  // Reduced motion fallback
+  if(prefersReducedMotion){
+    document.querySelectorAll('.reveal').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('.reveal-children > *').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('.rail-profile').forEach(el=>el.classList.add('drawn'));
+    document.querySelectorAll('.img-wipe').forEach(el=>el.classList.add('revealed'));
+    document.querySelectorAll('[data-target]').forEach(el=>{
+      let s='';
+      if(el.classList.contains('cred-number')){const l=el.nextElementSibling;if(l&&l.textContent.includes('bestätigten'))s='%';}
+      el.textContent=el.dataset.target+s;
+    });
+    // Show curtain end-state immediately
+    document.getElementById('curtainFabric').style.opacity='1';
+    document.getElementById('gleitfixAdapter').style.opacity='0';
+    document.getElementById('successTick').style.opacity='1';
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(l=>{
+    l.addEventListener('click',e=>{const t=document.querySelector(l.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}});
+  });
+  </script>
+</body>
+</html>

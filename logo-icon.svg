@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- Rail channel U-shape -->
+  <g transform="translate(10, 8)">
+    <rect x="0" y="0" width="8" height="60" rx="2" fill="#3D7A6B"/>
+    <rect x="52" y="0" width="8" height="60" rx="2" fill="#3D7A6B"/>
+    <rect x="0" y="52" width="60" height="8" rx="2" fill="#3D7A6B"/>
+    <!-- Slot opening -->
+    <rect x="22" y="0" width="16" height="6" rx="1.5" fill="#3D7A6B"/>
+    <!-- Glider in motion -->
+    <circle cx="30" cy="28" r="7" fill="#C4883A"/>
+    <circle cx="30" cy="13" r="4" fill="#C4883A" opacity="0.45"/>
+    <circle cx="30" cy="43" r="4" fill="#C4883A" opacity="0.45"/>
+    <path d="M30 50 L24 44 M30 50 L36 44" stroke="#C4883A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
